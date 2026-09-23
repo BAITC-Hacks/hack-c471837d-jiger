@@ -1,14 +1,18 @@
+import json
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, Request, Response
+from fastapi.concurrency import run_in_threadpool
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
+from starlette.datastructures import UploadFile
 
 from app import cart
 from app.agent import ERROR_REPLY, log_exception, run_agent
+from app.attachments import AttachmentError, attachment_form, prepare_attachments
 from app.cart_page import render_cart_page
 from app.catalog import load_catalog
 
@@ -90,16 +94,61 @@ def cart_api(request: Request) -> JSONResponse:
     return JSONResponse(content, headers=NO_STORE)
 
 
-@app.post("/chat")
-def chat(payload: ChatRequest, request: Request, response: Response) -> dict:
+@app.post("/chat", openapi_extra={
+    "requestBody": {
+        "required": True,
+        "content": {
+            "application/json": {"schema": ChatRequest.model_json_schema()},
+            "multipart/form-data": {"schema": {
+                "type": "object",
+                "properties": {
+                    "message": {"type": "string", "default": "", "maxLength": 1000},
+                    "history": {"type": "string", "default": "[]", "description": "JSON-список реплик"},
+                    "product_ids": {"type": "string", "default": "[]", "description": "JSON-список id товаров"},
+                    "files": {"type": "array", "maxItems": 3, "items": {"type": "string", "format": "binary"}},
+                },
+            }},
+        },
+    },
+})
+async def chat(request: Request, response: Response):
+    attachment_parts = []
+    content_type = request.headers.get("content-type", "").split(";", 1)[0].strip().lower()
+    try:
+        if content_type == "multipart/form-data":
+            async with attachment_form(request) as form:
+                payload = ChatRequest.model_validate({
+                    "message": form.get("message", ""),
+                    "history": json.loads(form.get("history", "[]")),
+                    "product_ids": json.loads(form.get("product_ids", "[]")),
+                })
+                files = form.getlist("files")
+                if any(not isinstance(file, UploadFile) for file in files) or any(
+                    isinstance(value, UploadFile) and key != "files"
+                    for key, value in form.multi_items()
+                ):
+                    raise AttachmentError("Прикрепляйте файлы в поле files.", 422)
+                if len(payload.message) <= 1000:
+                    attachment_parts = await run_in_threadpool(prepare_attachments, files)
+        elif not content_type or content_type == "application/json":
+            payload = ChatRequest.model_validate(await request.json())
+        else:
+            raise AttachmentError("Отправьте JSON или форму multipart/form-data.", 415)
+    except (ValidationError, json.JSONDecodeError, UnicodeError, TypeError) as error:
+        return await invalid_request(request, error)
+    except AttachmentError as error:
+        return JSONResponse(status_code=error.status_code, content={"reply": error.reply, "products": []})
     session_id = ensure_session(request, response)
-    if not payload.message.strip():
+    if not payload.message.strip() and not attachment_parts:
         return {"reply": "Пожалуйста, сформулируйте вопрос: какой товар вы ищете?", "products": []}
     if len(payload.message) > 1000:
         return {"reply": "Пожалуйста, сократите сообщение до 1000 символов, чтобы я мог помочь.", "products": []}
-    # FastAPI выполняет синхронный агент в пуле потоков, не блокируя веб-сервер.
+    # Извлечение документов и синхронный агент не блокируют цикл веб-сервера.
     try:
-        result = run_agent(payload.message, payload.history, payload.product_ids, session_id)
+        kwargs = {"attachment_parts": attachment_parts} if attachment_parts else {}
+        result = await run_in_threadpool(
+            run_agent, payload.message, payload.history, payload.product_ids, session_id, **kwargs
+        )
         reply = result.get("reply") if isinstance(result, dict) else None
         if not isinstance(reply, str) or not reply.strip():
             raise ValueError("Агент вернул пустой ответ.")

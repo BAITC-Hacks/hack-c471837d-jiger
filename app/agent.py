@@ -532,6 +532,7 @@ def _run_agent(
     product_ids: list | None = None,
     session_id: str | None = None,
     turn: dict | None = None,
+    attachment_parts: list[dict] | None = None,
 ) -> str:
     try:
         load_dotenv(Path(__file__).resolve().parent.parent / ".env")
@@ -561,7 +562,10 @@ def _run_agent(
         ):
             return finish("В истории допустимы только текстовые реплики user/assistant.")
         messages.append({"role": entry["role"], "content": entry["content"]})
-    messages.append({"role": "user", "content": message.strip()})
+    content = message.strip()
+    if attachment_parts:
+        content = ([{"type": "text", "text": content}] if content else []) + attachment_parts
+    messages.append({"role": "user", "content": content})
 
     api_key = os.environ.get("OPENAI_API_KEY")
     if not api_key:
@@ -630,6 +634,7 @@ def run_agent(
     history: list[dict],
     product_ids: list | None = None,
     session_id: str | None = None,
+    attachment_parts: list[dict] | None = None,
 ) -> dict:
     """Возвращает {"reply": текст ответа, "products": товары для карточек}.
 
@@ -642,7 +647,7 @@ def run_agent(
     turn = {"completed": False}
     cart.begin_turn(session_id)
     try:
-        reply = _run_agent(message, history, products, product_ids, session_id, turn)
+        reply = _run_agent(message, history, products, product_ids, session_id, turn, attachment_parts)
     except Exception:
         log_exception("Необработанная ошибка run_agent")
         reply = finish(ERROR_REPLY)

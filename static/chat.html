@@ -184,6 +184,17 @@
       button:hover:not(:disabled) { background: #ffc321; }
       button:focus-visible { outline: 3px solid #1c4b7c; outline-offset: 3px; }
       button:disabled { opacity: .45; cursor: default; }
+      .attach-button { background: #e8eef5; white-space: nowrap; }
+      .attach-button:hover:not(:disabled) { background: #dce5f0; }
+      .attachments { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+      .attachments:empty { display: none; }
+      .attachment-chip {
+        display: flex; align-items: center; gap: 6px; max-width: 100%; min-width: 0;
+        padding: 5px 8px; border-radius: 10px; background: #e8eef5; font-size: 12px;
+      }
+      .attachment-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .attachment-remove { flex: 0 0 28px; min-height: 28px; padding: 0; background: transparent; }
+      .attachment-error { margin: 8px 0 0; color: #9b2c2c; font-size: 12px; }
       .hint { margin: 10px 0 0; color: #7b8898; font-size: 11px; }
       @keyframes pulse { to { opacity: .25; } }
       @media (prefers-reduced-motion: reduce) { .typing::before { animation: none; } }
@@ -199,6 +210,9 @@
         .composer { padding: 16px; padding-bottom: max(16px, env(safe-area-inset-bottom)); }
         input { font-size: 16px; }
         button { padding: 0 12px; }
+        form { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
+        #message-input { grid-column: 1 / -1; width: 100%; }
+        .attach-button, #send-button { min-height: 42px; }
       }
     </style>
   </head>
@@ -218,10 +232,15 @@
 
       <footer class="composer">
         <form id="chat-form">
-          <input id="message-input" type="text" autocomplete="off" aria-label="Сообщение ассистенту" placeholder="Какой товар вы ищете?" required>
+          <input id="message-input" type="text" autocomplete="off" maxlength="1000" aria-label="Сообщение ассистенту" placeholder="Какой товар вы ищете?">
+          <input id="file-input" type="file" multiple hidden accept=".jpg,.jpeg,.png,.pdf,.xlsx,.xls,.docx,image/jpeg,image/png,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+          <button id="attach-button" class="attach-button" type="button">Прикрепить</button>
           <button id="send-button" type="submit" disabled>Отправить</button>
         </form>
+        <div id="attachments" class="attachments" aria-label="Прикреплённые файлы"></div>
+        <p id="attachment-error" class="attachment-error" role="alert" hidden></p>
         <p class="hint">Можно писать на русском или қазақша · Enter — отправить</p>
+        <p class="hint">До 3 файлов по 10 МБ: JPG, PNG, PDF, Excel, Word (.docx)</p>
       </footer>
     </main>
 
@@ -234,6 +253,11 @@
       const input = document.getElementById("message-input");
       const sendButton = document.getElementById("send-button");
       const typing = document.getElementById("typing");
+      const fileInput = document.getElementById("file-input");
+      const attachButton = document.getElementById("attach-button");
+      const attachments = document.getElementById("attachments");
+      const attachmentError = document.getElementById("attachment-error");
+      let selectedFiles = [];
       let busy = false;
 
       // ---------- Безопасный рендер Markdown-ответа ----------
@@ -496,8 +520,66 @@
       }
 
       function updateButton() {
-        sendButton.disabled = busy || !input.value.trim();
+        sendButton.disabled = busy || (!input.value.trim() && selectedFiles.length === 0);
+        attachButton.disabled = busy || selectedFiles.length >= 3;
+        fileInput.disabled = busy;
+        for (const button of attachments.querySelectorAll("button")) button.disabled = busy;
       }
+
+      function showAttachmentError(message = "") {
+        attachmentError.textContent = message;
+        attachmentError.hidden = !message;
+      }
+
+      function renderAttachments() {
+        attachments.replaceChildren();
+        selectedFiles.forEach((file, index) => {
+          const chip = document.createElement("span");
+          chip.className = "attachment-chip";
+          const name = document.createElement("span");
+          name.className = "attachment-name";
+          name.textContent = file.name;
+          name.title = file.name;
+          const remove = document.createElement("button");
+          remove.type = "button";
+          remove.className = "attachment-remove";
+          remove.textContent = "×";
+          remove.setAttribute("aria-label", `Удалить файл ${file.name}`);
+          remove.addEventListener("click", () => {
+            if (busy) return;
+            selectedFiles.splice(index, 1);
+            showAttachmentError();
+            renderAttachments();
+          });
+          chip.append(name, remove);
+          attachments.append(chip);
+        });
+        updateButton();
+      }
+
+      attachButton.addEventListener("click", () => fileInput.click());
+      fileInput.addEventListener("change", () => {
+        const incoming = Array.from(fileInput.files);
+        fileInput.value = "";
+        if (busy) return;
+        if (selectedFiles.length + incoming.length > 3) {
+          showAttachmentError("Можно прикрепить не более 3 файлов.");
+          return;
+        }
+        for (const file of incoming) {
+          if (!/\.(jpe?g|png|pdf|xlsx?|docx)$/i.test(file.name)) {
+            showAttachmentError(`Неподдерживаемый тип файла «${file.name}». Выберите JPG, PNG, PDF, Excel или DOCX.`);
+            return;
+          }
+          if (file.size > 10 * 1024 * 1024 || file.size === 0) {
+            showAttachmentError(`Файл «${file.name}» пуст или превышает лимит 10 МБ.`);
+            return;
+          }
+        }
+        selectedFiles.push(...incoming);
+        showAttachmentError();
+        renderAttachments();
+      });
 
       input.addEventListener("input", updateButton);
       input.addEventListener("keydown", (event) => {
@@ -509,11 +591,19 @@
       form.addEventListener("submit", async (event) => {
         event.preventDefault();
         const message = input.value.trim();
-        if (busy || !message) return;
+        if (busy || (!message && selectedFiles.length === 0)) return;
 
         const previousHistory = history.slice(-10);
-        addMessage("user", message);
+        const submittedFiles = [...selectedFiles];
+        const displayMessage = [message, ...submittedFiles.map(file => `Вложение: ${file.name}`)].filter(Boolean).join("\n");
+        const body = new FormData();
+        body.append("message", message);
+        body.append("history", JSON.stringify(previousHistory));
+        body.append("product_ids", JSON.stringify(shownProductIds.slice(-10)));
+        for (const file of submittedFiles) body.append("files", file);
+        addMessage("user", displayMessage);
         input.value = "";
+        showAttachmentError();
         busy = true;
         typing.hidden = false;
         messages.setAttribute("aria-busy", "true");
@@ -529,8 +619,7 @@
           const response = await fetch("/chat", {
             method: "POST",
             credentials: "same-origin",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ message, history: previousHistory, product_ids: shownProductIds.slice(-10) }),
+            body,
             signal: controller.signal,
           });
           const data = await response.json();
@@ -538,6 +627,12 @@
             throw new Error("Некорректный ответ сервера");
           }
           reply = data.reply;
+          if (!response.ok) {
+            if (!input.value) input.value = message;
+            return;
+          }
+          selectedFiles = [];
+          renderAttachments();
           products = Array.isArray(data.products) ? data.products : [];
           for (const product of products) {
             const id = Number(product.id);
@@ -547,8 +642,9 @@
             shownProductIds.push(id);
           }
           if (shownProductIds.length > 20) shownProductIds.splice(0, shownProductIds.length - 20);
-          history.push({ role: "user", content: message }, { role: "assistant", content: reply });
+          history.push({ role: "user", content: displayMessage }, { role: "assistant", content: reply });
         } catch (error) {
+          if (!input.value) input.value = message;
           reply = error.name === "AbortError"
             ? "Ответ занимает слишком много времени. Пожалуйста, попробуйте ещё раз."
             : "Не удалось связаться с ассистентом. Проверьте соединение и попробуйте ещё раз.";
