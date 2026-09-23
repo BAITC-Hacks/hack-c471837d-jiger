@@ -1,0 +1,110 @@
+{
+  "catalog_file": "data/products.json",
+  "catalog_sha256": "292c49e10d07938a6133b2c6885543655b342c6fdfa327e8c14b5fe4e35ba49e",
+  "positions": [
+    {
+      "article": "200300273_",
+      "name": "027004 АВ DRX125 MT 3ф 40А 10ka Legrand (1)",
+      "requested": 2,
+      "stock": 36,
+      "price": 26930,
+      "expected": "в наличии"
+    },
+    {
+      "article": "200300274_",
+      "name": "027005 АВ DRX125 MT 3ф 50А 10ka Legrand (1)",
+      "requested": 3,
+      "stock": 33,
+      "price": 26930,
+      "expected": "в наличии"
+    },
+    {
+      "article": "030300426_",
+      "name": "020-108 Коробка распаячная для полых стен с пласт. Лапками и крышкой 110/50.2.2",
+      "requested": 5,
+      "stock": 3,
+      "price": 350,
+      "expected": "недостаточно"
+    },
+    {
+      "article": "310100080_",
+      "name": "007886 Диф.авт. 1p+N 16А (30мА) 411002 Legrand (1)!!!",
+      "requested": 1,
+      "stock": 0,
+      "price": 9430,
+      "expected": "нет в наличии"
+    },
+    {
+      "article": "TEST-ATTACHMENT-NOT-FOUND-0001",
+      "name": "Тестовая позиция, отсутствующая в каталоге",
+      "requested": 1,
+      "stock": null,
+      "price": null,
+      "expected": "не найден"
+    }
+  ],
+  "photo_source": "https://ekt.kz/upload/iblock/592/ecrd69l3r236hyuttkj4lmnz1euly1a7/027004_av_drx125_mt_3f_40a_10ka_legrand_1.jpg",
+  "photo_product_url": "https://ekt.kz/catalog/nizkovoltnaya_apparatura/silovye_avtomaticheskie_vyklyuchateli/drx125_mt_10_250_a_legrand/027004_av_drx125_mt_3f_40a_10ka_legrand_1/",
+  "files": [
+    {
+      "name": "01-specification.xlsx",
+      "bytes": 5960
+    },
+    {
+      "name": "02-invoice.docx",
+      "bytes": 37387
+    },
+    {
+      "name": "03-invoice.pdf",
+      "bytes": 55502
+    },
+    {
+      "name": "04-legacy-invoice.xls",
+      "bytes": 5632
+    },
+    {
+      "name": "05-product.jpg",
+      "bytes": 111994
+    },
+    {
+      "name": "06-product.jpeg",
+      "bytes": 111994
+    },
+    {
+      "name": "07-invoice.png",
+      "bytes": 76249
+    },
+    {
+      "name": "08-long-specification.docx",
+      "bytes": 38264
+    },
+    {
+      "name": "09-eleven-pages.pdf",
+      "bytes": 59698
+    },
+    {
+      "name": "10-scanned-invoice.pdf",
+      "bytes": 55982
+    },
+    {
+      "name": "11-unsupported.txt",
+      "bytes": 126
+    },
+    {
+      "name": "12-corrupted.pdf",
+      "bytes": 42
+    },
+    {
+      "name": "13-empty.pdf",
+      "bytes": 0
+    },
+    {
+      "name": "14-too-large.pdf",
+      "bytes": 10541463
+    },
+    {
+      "name": "15-confirmation-inside-file.docx",
+      "bytes": 36845
+    }
+  ]
+}

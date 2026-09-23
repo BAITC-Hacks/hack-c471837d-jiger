@@ -1,0 +1,89 @@
+{
+  "mode": "Local ASGI and localhost HTTP; agent replaced; no OpenAI calls",
+  "files_and_combined_request": [
+    {
+      "file": "01-specification.xlsx",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "file": "02-invoice.docx",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "file": "03-invoice.pdf",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "file": "04-legacy-invoice.xls",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "file": "05-product.jpg",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "file": "06-product.jpeg",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "file": "07-invoice.png",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "file": "08-long-specification.docx",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "file": "09-eleven-pages.pdf",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "file": "10-scanned-invoice.pdf",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "file": "11-unsupported.txt",
+      "status": 415,
+      "passed": true
+    },
+    {
+      "file": "12-corrupted.pdf",
+      "status": 422,
+      "passed": true
+    },
+    {
+      "file": "13-empty.pdf",
+      "status": 422,
+      "passed": true
+    },
+    {
+      "file": "14-too-large.pdf",
+      "status": 413,
+      "passed": true
+    },
+    {
+      "file": "15-confirmation-inside-file.docx",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "scenario": "3 files without typed message",
+      "status": 200,
+      "passed": true
+    }
+  ],
+  "powershell_check_api": {
+    "checks_passed": 6,
+    "agent_calls": 0
+  }
+}
