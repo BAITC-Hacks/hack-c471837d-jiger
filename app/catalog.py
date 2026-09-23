@@ -12,11 +12,11 @@ def load_catalog() -> list[dict]:
             products = json.load(file)
     except FileNotFoundError:
         raise RuntimeError(
-            "Каталог data/products.json не найден. Запустите python fetch_catalog.py."
+            "Каталог data/products.json не найден. Запустите uv run python fetch_catalog.py."
         ) from None
     except (json.JSONDecodeError, UnicodeDecodeError):
         raise RuntimeError(
-            "Каталог data/products.json повреждён. Повторите python fetch_catalog.py."
+            "Каталог data/products.json повреждён. Повторите uv run python fetch_catalog.py."
         ) from None
     except OSError:
         raise RuntimeError(
