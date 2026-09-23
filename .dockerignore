@@ -1,0 +1,18 @@
+# Include only the files required by the application.
+**
+!requirements.txt
+!app/
+!app/**
+!static/
+!static/chat.html
+!data/
+!data/products.json
+
+# Exclude credentials and generated Python files even inside included folders.
+**/.env
+**/.env.*
+**/*.pem
+**/*.key
+**/__pycache__/
+**/*.pyc
+**/*.pyo
