@@ -193,7 +193,8 @@ def test_confirmation_uses_fresh_quantity_from_api(live_catalog: Path) -> None:
     again = agent.execute_tool(
         "propose_cart_add", json.dumps({"product_id": 1, "quantity": 3}), session_id, ""
     )
-    assert "error" in again and again["max_quantity"] == 1
+    assert again["status"] == "pending" and again["quantity"] == 1
+    assert again["max_quantity"] == 1 and again.get("adjusted")
 
 
 @respx.mock

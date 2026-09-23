@@ -176,13 +176,13 @@ async def test_refusal_and_cancel_do_not_change_cart(client: httpx.AsyncClient) 
 async def test_four_rejected_three_confirmed_and_cart_matches(client: httpx.AsyncClient) -> None:
     await chat(client, f"Добавь 4 шт. {LOW_STOCK_ARTICLE}", [
         [("propose_cart_add", {"product_id": LOW_STOCK_ID, "quantity": 4})],
-        [("propose_cart_add", {"product_id": LOW_STOCK_ID, "quantity": 3})],
         "В наличии только 3 шт. Могу добавить 3 шт. на 159 ₸. Подтвердите добавление?",
     ])
 
-    rejected, accepted = tool_results("propose_cart_add")
-    assert "error" in rejected and rejected["max_quantity"] == 3
+    [accepted] = tool_results("propose_cart_add")
     assert accepted["status"] == "pending" and accepted["quantity"] == 3
+    assert accepted["max_quantity"] == 3
+    assert accepted.get("adjusted"), "Уменьшение с 4 до 3 шт. должно быть названо явно."
     assert (await api_cart(client))["items"] == [], "До «да» корзина остаётся пустой."
 
     await chat(client, "да", CONFIRM)
@@ -344,10 +344,12 @@ def test_undelivered_reply_drops_proposal(monkeypatch: pytest.MonkeyPatch) -> No
     assert cart.get_pending(session_id) is None
 
 
+# Количество приводится к остатку и кратности прямо в предложении: покупателю
+# всегда есть что подтвердить, а в корзину по-прежнему ничего не попадает.
 @pytest.mark.parametrize("quantity, expected", [
-    (5, {"error": True, "min_batch": 10, "suggested_quantity": 10}),
-    (15, {"error": True, "min_batch": 10, "suggested_quantity": 10}),
-    (30, {"error": True, "max_quantity": 20}),
+    (5, {"status": "pending", "quantity": 10, "min_batch": 10, "adjusted": True}),
+    (15, {"status": "pending", "quantity": 10, "min_batch": 10, "adjusted": True}),
+    (30, {"status": "pending", "quantity": 20, "max_quantity": 20, "adjusted": True}),
     (20, {"status": "pending", "quantity": 20, "total": 2000}),
 ])
 def test_min_batch_and_detail_stock(
@@ -370,10 +372,11 @@ def test_min_batch_and_detail_stock(
     )
 
     for key, value in expected.items():
-        if key == "error":
-            assert "error" in result
+        if key == "adjusted":
+            assert result.get("adjusted"), "Уменьшение количества должно быть названо явно."
         else:
             assert result[key] == value
+    assert cart.snapshot(session_id)["items"] == [], "Предложение не наполняет корзину."
 
 
 def test_invalid_arguments_and_missing_session() -> None:

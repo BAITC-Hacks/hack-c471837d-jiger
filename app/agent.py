@@ -358,26 +358,19 @@ def propose_cart_add(
         else:
             message = f"Доступный остаток {stock - already} шт. меньше минимальной партии {batch} шт."
         return {"error": message, "max_quantity": 0, "min_batch": batch}
+    # Количество приводится к остатку и кратности здесь же: предложение всё равно
+    # требует явного согласия, а отдельная ошибка оставляла покупателя без предложения,
+    # которое можно подтвердить.
+    adjusted = []
     if quantity > available:
-        return {
-            "error": (
-                f"Доступно только {available} шт. (остаток {stock} шт., в корзине уже {already} шт.). "
-                f"Предложи покупателю {available} шт. и снова спроси подтверждение."
-            ),
-            "max_quantity": available,
-            "min_batch": batch,
-        }
+        adjusted.append(
+            f"Запрошено {quantity} шт., доступно {available} шт. "
+            f"(остаток {stock} шт., в корзине уже {already} шт.)."
+        )
+        quantity = available
     if quantity % batch:
-        suggested = max(quantity - quantity % batch, batch)
-        return {
-            "error": (
-                f"Товар продаётся кратно {batch} шт. Предложи покупателю {suggested} шт. "
-                "и снова спроси подтверждение."
-            ),
-            "min_batch": batch,
-            "suggested_quantity": suggested,
-            "max_quantity": available,
-        }
+        quantity = max(quantity - quantity % batch, batch)
+        adjusted.append(f"Товар продаётся кратно {batch} шт.")
     price = fields.get("price")
     total = price * quantity if isinstance(price, (int, float)) and not isinstance(price, bool) else None
     proposal = {
@@ -395,12 +388,20 @@ def propose_cart_add(
     result.update({key: proposal[key] for key in ("article", "name", "price", "quantity", "total")})
     if already:
         result["already_in_cart"] = already
+    result["max_quantity"] = available
+    result["min_batch"] = batch
     result["items"] = cart.snapshot(session_id)["pending"]["items"]
     result["note"] = (
         "Товары НЕ добавлены. Покажи покупателю ВСЕ позиции из items: артикул, название, цену, "
         "количество и сумму; спроси одним предложением «Подтвердите добавление всех позиций?». "
         "confirm_cart_add вызывай только после его ответа."
     )
+    if adjusted:
+        result["adjusted"] = " ".join(adjusted)
+        result["note"] = (
+            f"Количество уменьшено: {result['adjusted']} Обязательно скажи об этом покупателю "
+            f"и предложи {quantity} шт. " + result["note"]
+        )
     return result
 
 
@@ -676,6 +677,14 @@ def _run_agent(
     if not api_key:
         return finish("Не настроен OPENAI_API_KEY. Добавьте ключ в окружение или .env.")
     model = os.environ.get("MODEL", "gpt-4o-mini").strip() or "gpt-4o-mini"
+    # Покупатель явно согласился с предложением из прошлого ответа: подтверждение
+    # не должно зависеть от того, выберет ли модель нужный инструмент. Иначе она
+    # иногда повторно вызывает propose_cart_add, и корзина остаётся пустой.
+    force_confirm = False
+    if cart.is_known_session(session_id) and cart.is_confirmation(message):
+        proposal = cart.snapshot(session_id).get("pending")
+        force_confirm = bool(proposal and proposal.get("awaiting_confirmation"))
+
     pending_analogs: set[int] = set()
     checked_analogs: set[int] = set()
 
@@ -685,7 +694,15 @@ def _run_agent(
             for iteration in range(MAX_TOOL_ROUNDS + 1):
                 final_round = iteration == MAX_TOOL_ROUNDS
                 tool_choice = "none" if final_round else "auto"
-                if pending_analogs and not final_round:
+                if force_confirm and not final_round:
+                    messages.append({"role": "system", "content": (
+                        "Покупатель явно подтвердил предложение из прошлого ответа. "
+                        "Сейчас вызови confirm_cart_add без аргументов и сообщи результат "
+                        "вместе со ссылкой cart_url; propose_cart_add повторно не вызывай."
+                    )})
+                    tool_choice = {"type": "function", "function": {"name": "confirm_cart_add"}}
+                    force_confirm = False
+                elif pending_analogs and not final_round:
                     messages.append({"role": "system", "content": (
                         f"Каталог подтвердил нулевой остаток у id {sorted(pending_analogs)}. "
                         "Сейчас вызови find_analogs для этих product_id с max_results=3; "
