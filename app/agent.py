@@ -15,7 +15,7 @@ from openai import (
     RateLimitError,
 )
 
-from app import catalog, redact_secrets
+from app import analogs, catalog, redact_secrets
 from app.prompts import SYSTEM_PROMPT
 
 MAX_TOOL_ROUNDS = 4
@@ -30,11 +30,32 @@ TOOLS = [
     {
         "type": "function",
         "function": {
+            "name": "find_analogs",
+            "description": (
+                "Подобрать до пяти доступных альтернатив по точному артикулу товара. "
+                "Возвращает товары той же категории с положительным остатком и reason. "
+                "При неизвестном артикуле или категории возвращает пустой список. "
+                "Результаты упорядочены по сходству описаний; совместимость нужно "
+                "проверять по характеристикам."
+            ),
+            "strict": True,
+            "parameters": {
+                "type": "object",
+                "properties": {"sku": {"type": "string", "description": "Точный артикул исходного товара"}},
+                "required": ["sku"],
+                "additionalProperties": False,
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "search_products",
             "description": (
                 "Поиск реальных товаров по артикулу, названию и характеристикам в каталоге EKT. "
                 "Артикул передавай целиком, сохраняя нули, дефисы и подчёркивания. "
-                "Передавай короткий запрос на русском; при отсутствии совпадений "
+                "Передавай короткий запрос на русском. Неизвестный точный артикул "
+                "означает, что товар не найден. Для поиска по названию без совпадений "
                 "попробуй синоним или более общий запрос."
             ),
             "strict": True,
@@ -68,6 +89,10 @@ TOOLS = [
         },
     },
 ]
+
+
+def find_analogs(sku: str) -> list[dict]:
+    return analogs.find_analogs(sku)
 
 
 def search_products(query: str, max_results: int = 5) -> list[dict]:
@@ -111,6 +136,8 @@ def execute_tool(name: str, arguments: str) -> object:
             return search_products(**args)
         if name == "get_product" and set(args) == {"product_id"}:
             return get_product(**args)
+        if name == "find_analogs" and set(args) == {"sku"}:
+            return find_analogs(**args)
         raise ValueError("Неизвестный инструмент или неверный набор аргументов.")
     except json.JSONDecodeError:
         return {"error": "Некорректный JSON аргументов. Исправь аргументы инструмента."}

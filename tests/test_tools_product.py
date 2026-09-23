@@ -65,6 +65,87 @@ def test_unknown_sku(catalog: list[dict], in_stock_sku: str) -> None:
     )
 
 
+@pytest.mark.parametrize("suffix", ["-MISSING", "_MISSING", "/MISSING", ".MISSING"])
+def test_unknown_sku_does_not_fall_back_to_matching_name(
+    catalog: list[dict], in_stock_sku: str, suffix: str,
+) -> None:
+    source = next(product for product in catalog if product["article"] == in_stock_sku)
+    missing_sku = in_stock_sku + suffix
+    assert missing_sku not in {product["article"] for product in catalog}
+
+    assert agent.search_products(f"{source['name'].split()[0]} {missing_sku}") == []
+
+
+def test_article_search_ignores_case_and_outer_whitespace(in_stock_sku: str) -> None:
+    results = agent.search_products(f"  {in_stock_sku.lower()}  ")
+
+    assert results and results[0]["article"] == in_stock_sku
+
+
+def test_known_article_in_a_question_with_requested_quantity(in_stock_sku: str) -> None:
+    results = agent.search_products(f"Есть {in_stock_sku} 7 шт?")
+
+    assert results and results[0]["article"] == in_stock_sku
+
+
+@pytest.mark.parametrize("power", ["30 Вт", "30Вт"])
+def test_search_by_category_and_characteristics(catalog: list[dict], power: str) -> None:
+    expected_ids = {
+        product["id"] for product in catalog
+        if product["properties"]["KATEGORIYA"] == "Трековый светильник"
+    }
+
+    results = agent.search_products(f"трековый светильник {power} IP20")
+
+    assert results
+    assert {product["id"] for product in results}.issubset(expected_ids)
+    assert all("30 Вт" in product["description"] and "IP20" in product["description"] for product in results)
+
+
+def test_specification_is_not_matched_as_a_prefix() -> None:
+    assert agent.search_products("трековый IP2") == []
+
+
+class TestArticleAliases:
+    @pytest.fixture
+    def catalog(self, catalog: list[dict]) -> list[dict]:
+        # Change only the source data; offline_catalog still loads it through mocked EKT HTTP.
+        catalog[0]["article"] = "000123_"
+        catalog[0]["properties"]["CML2_ARTICLE"] = "SUP-001_"
+        catalog[0]["properties"]["ARTIKULPOSTAVSHCHIKA"] = "SUP.0002"
+        return catalog
+
+    @pytest.mark.parametrize("query", ["000123_", "sup-001_", "SUP.0002"])
+    def test_search_by_article_alias(self, catalog: list[dict], query: str) -> None:
+        results = agent.search_products(query)
+
+        assert results and results[0]["id"] == catalog[0]["id"]
+        assert results[0]["article"] == "000123_"
+
+    def test_article_leading_zeroes_are_significant(self) -> None:
+        assert agent.search_products("123_") == []
+
+
+class TestCompactMeasurements:
+    @pytest.fixture
+    def catalog(self, catalog: list[dict]) -> list[dict]:
+        for product in catalog:
+            product["name"] = product["name"].replace("30 мА", "30мА")
+            product["description"] = product["description"].replace("30 мА", "30мА")
+        return catalog
+
+    def test_spaced_unit_finds_compact_catalog_measurement(self, catalog: list[dict]) -> None:
+        expected_ids = {
+            product["id"] for product in catalog
+            if product["properties"]["KATEGORIYA"] == "Дифференциальный автомат"
+        }
+
+        results = agent.search_products("дифференциальный автомат 30 мА")
+
+        assert results
+        assert {product["id"] for product in results}.issubset(expected_ids)
+
+
 def test_unknown_product_id_returns_not_found(catalog: list[dict]) -> None:
     missing_id = max(product["id"] for product in catalog) + 1
 

@@ -7,6 +7,13 @@ PRODUCT_FIELDS = (
     "id", "name", "article", "price", "category", "image", "url", "url_api_detail",
     "description", "quantity", "properties", "characteristics",
 )
+SEARCH_TOKEN = re.compile(r"\w+(?:[-./]\w+)*")
+MEASUREMENT = re.compile(r"(?<![\w./-])(\d+(?:[.,]\d+)?)\s*(к?вт|м?а|к?в|мм|см|м|лм|к|гц)\b")
+
+
+def _search_text(text: str) -> str:
+    # Catalog descriptions use both "30мА" and "30 мА". Do not normalize inside SKUs.
+    return MEASUREMENT.sub(lambda match: match[1].replace(",", ".") + match[2], text.casefold())
 
 
 def product_fields(product: dict) -> dict:
@@ -17,6 +24,20 @@ def product_fields(product: dict) -> dict:
         for field in PRODUCT_FIELDS
         if field in product or field in detail
     }
+
+
+def product_articles(product: dict) -> set[str]:
+    """Read article aliases without dropping leading zeroes or separators."""
+    articles = set()
+    for source in (product, product.get("detail", {})):
+        if not isinstance(source, dict):
+            continue
+        values = [source.get("article")]
+        properties = source.get("properties")
+        if isinstance(properties, dict):
+            values.extend(properties.get(key) for key in ("CML2_ARTICLE", "ARTIKULPOSTAVSHCHIKA"))
+        articles.update(str(value).casefold().strip() for value in values if value is not None)
+    return articles - {""}
 
 
 def load_catalog() -> list[dict]:
@@ -51,9 +72,12 @@ def search_products(query: str, max_results: int = 5) -> list[dict]:
         raise ValueError("Количество результатов должно быть целым числом больше нуля.")
 
     folded_query = query.casefold().strip()
-    words = set(re.findall(r"\w+", folded_query))
+    # Keep whole identifiers: splitting TEST-LED-30-A-MISSING would match TEST-LED-30-A.
+    article_words = set(SEARCH_TOKEN.findall(folded_query))
+    words = set(SEARCH_TOKEN.findall(_search_text(folded_query)))
     if not words:
         return []
+    identifiers = {word for word in words if not word.isalpha()}
 
     matches = []
     for product in load_catalog():
@@ -63,19 +87,17 @@ def search_products(query: str, max_results: int = 5) -> list[dict]:
             for source in sources
             for field in ("article", "name", "category", "description", "characteristics", "properties")
         ).casefold()
-        articles = []
-        for source in sources:
-            articles.append(str(source.get("article") or "").casefold().strip())
-            properties = source.get("properties")
-            if isinstance(properties, dict):
-                articles.extend(
-                    str(properties.get(key) or "").casefold().strip()
-                    for key in ("CML2_ARTICLE", "ARTIKULPOSTAVSHCHIKA")
-                )
-        exact_article = any(
-            article and re.search(r"(?<!\w)" + re.escape(article) + r"(?!\w)", folded_query)
-            for article in articles
-        )
+        searchable_words = set(SEARCH_TOKEN.findall(searchable))
+        searchable = _search_text(searchable)
+        searchable_words.update(SEARCH_TOKEN.findall(searchable))
+        articles = product_articles(product)
+        exact_article = folded_query in articles or bool(articles & article_words)
+        # Unknown codes must not fall back to a coincidentally matching name/category.
+        # Whole numeric/specification tokens still allow queries such as "IP20" or "30 Вт".
+        # An explicit known article still identifies the product when the buyer adds
+        # an order quantity or a requested specification that needs checking.
+        if not exact_article and not identifiers.issubset(searchable_words):
+            continue
         score = sum(word in searchable for word in words)
         if exact_article or score:
             matches.append((exact_article, score, product))
