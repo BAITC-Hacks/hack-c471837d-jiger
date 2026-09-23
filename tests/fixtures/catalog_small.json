@@ -1,0 +1,2349 @@
+[
+  {
+    "id": 900001,
+    "name": "Трековый светильник 30 Вт 2400 лм 4000 К IP20 (тестовый A)",
+    "article": "TEST-LED-30-A",
+    "description": "Синтетический товар для автоматических тестов. Мощность: 30 Вт. Световой поток: 2400 лм. Цветовая температура: 4000 К. Степень защиты: IP20. Монтаж: двухлинейный шинопровод.",
+    "price": 1810,
+    "quantity": 24,
+    "stores": [
+      {
+        "id": 2,
+        "name": "Брак MEGALIGHT",
+        "quantity": 0
+      },
+      {
+        "id": 3,
+        "name": "Шымкент (ул.Байдукова)",
+        "quantity": 0
+      },
+      {
+        "id": 4,
+        "name": "Маркетинг MEGALIGHT",
+        "quantity": 0
+      },
+      {
+        "id": 5,
+        "name": "Никонов",
+        "quantity": 0
+      },
+      {
+        "id": 6,
+        "name": "РЦ MEGALIGHT",
+        "quantity": 0
+      },
+      {
+        "id": 7,
+        "name": "Талдыкорган",
+        "quantity": 0
+      },
+      {
+        "id": 8,
+        "name": "Тастак",
+        "quantity": 0
+      },
+      {
+        "id": 9,
+        "name": "Торговый зал",
+        "quantity": 0
+      },
+      {
+        "id": 10,
+        "name": "Востановленный продукт",
+        "quantity": 0
+      },
+      {
+        "id": 11,
+        "name": "перемещение",
+        "quantity": 0
+      },
+      {
+        "id": 12,
+        "name": "Основной склад",
+        "quantity": 24
+      },
+      {
+        "id": 13,
+        "name": "Алматы",
+        "quantity": 0
+      },
+      {
+        "id": 14,
+        "name": "ЩИТОВОЕ",
+        "quantity": 0
+      },
+      {
+        "id": 15,
+        "name": "РЦ UNIT",
+        "quantity": 0
+      },
+      {
+        "id": 16,
+        "name": "Образцы Отдел Закупа",
+        "quantity": 0
+      },
+      {
+        "id": 17,
+        "name": "Витрина ТЗ",
+        "quantity": 0
+      },
+      {
+        "id": 18,
+        "name": "Усть-Каменогорск",
+        "quantity": 0
+      },
+      {
+        "id": 19,
+        "name": "Тараз",
+        "quantity": 0
+      },
+      {
+        "id": 20,
+        "name": "Атырау",
+        "quantity": 0
+      },
+      {
+        "id": 21,
+        "name": "Караганда",
+        "quantity": 0
+      },
+      {
+        "id": 22,
+        "name": "Новосибирск",
+        "quantity": 0
+      },
+      {
+        "id": 23,
+        "name": "Актау",
+        "quantity": 0
+      },
+      {
+        "id": 24,
+        "name": "Нур-Султан",
+        "quantity": 0
+      },
+      {
+        "id": 25,
+        "name": "Шымкент (Тассай)",
+        "quantity": 0
+      }
+    ],
+    "image": "https://example.test/images/TEST-LED-30-A.jpg",
+    "url": "https://example.test/catalog/track_lights/TEST-LED-30-A/",
+    "offers": [],
+    "properties": {
+      "BRAND_PRIORITY": "1",
+      "CML2_ARTICLE": "TEST-LED-30-A",
+      "NOVINKA": "Нет",
+      "SPETSPREDLOZHENIE": "Нет",
+      "CML2_TRAITS": [
+        "Товары приобретенные",
+        "Товар",
+        "TEST-LED-30-A",
+        "Нет",
+        "Нет",
+        "Трековый светильник 30 Вт 2400 лм 4000 К IP20 (тестовый A)",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      "CML2_TAXES": "16",
+      "ARTIKULPOSTAVSHCHIKA": "TEST-LED-30-A",
+      "TORGOVAYA_MARKA": " MEGALIGHT",
+      "KATEGORIYA": "Трековый светильник"
+    }
+  },
+  {
+    "id": 900002,
+    "name": "Трековый светильник 30 Вт 2400 лм 4000 К IP20 (тестовый B)",
+    "article": "TEST-LED-30-B",
+    "description": "Синтетический товар для автоматических тестов. Мощность: 30 Вт. Световой поток: 2400 лм. Цветовая температура: 4000 К. Степень защиты: IP20. Монтаж: двухлинейный шинопровод.",
+    "price": 1890,
+    "quantity": 18,
+    "stores": [
+      {
+        "id": 2,
+        "name": "Брак MEGALIGHT",
+        "quantity": 0
+      },
+      {
+        "id": 3,
+        "name": "Шымкент (ул.Байдукова)",
+        "quantity": 0
+      },
+      {
+        "id": 4,
+        "name": "Маркетинг MEGALIGHT",
+        "quantity": 0
+      },
+      {
+        "id": 5,
+        "name": "Никонов",
+        "quantity": 0
+      },
+      {
+        "id": 6,
+        "name": "РЦ MEGALIGHT",
+        "quantity": 0
+      },
+      {
+        "id": 7,
+        "name": "Талдыкорган",
+        "quantity": 0
+      },
+      {
+        "id": 8,
+        "name": "Тастак",
+        "quantity": 0
+      },
+      {
+        "id": 9,
+        "name": "Торговый зал",
+        "quantity": 0
+      },
+      {
+        "id": 10,
+        "name": "Востановленный продукт",
+        "quantity": 0
+      },
+      {
+        "id": 11,
+        "name": "перемещение",
+        "quantity": 0
+      },
+      {
+        "id": 12,
+        "name": "Основной склад",
+        "quantity": 18
+      },
+      {
+        "id": 13,
+        "name": "Алматы",
+        "quantity": 0
+      },
+      {
+        "id": 14,
+        "name": "ЩИТОВОЕ",
+        "quantity": 0
+      },
+      {
+        "id": 15,
+        "name": "РЦ UNIT",
+        "quantity": 0
+      },
+      {
+        "id": 16,
+        "name": "Образцы Отдел Закупа",
+        "quantity": 0
+      },
+      {
+        "id": 17,
+        "name": "Витрина ТЗ",
+        "quantity": 0
+      },
+      {
+        "id": 18,
+        "name": "Усть-Каменогорск",
+        "quantity": 0
+      },
+      {
+        "id": 19,
+        "name": "Тараз",
+        "quantity": 0
+      },
+      {
+        "id": 20,
+        "name": "Атырау",
+        "quantity": 0
+      },
+      {
+        "id": 21,
+        "name": "Караганда",
+        "quantity": 0
+      },
+      {
+        "id": 22,
+        "name": "Новосибирск",
+        "quantity": 0
+      },
+      {
+        "id": 23,
+        "name": "Актау",
+        "quantity": 0
+      },
+      {
+        "id": 24,
+        "name": "Нур-Султан",
+        "quantity": 0
+      },
+      {
+        "id": 25,
+        "name": "Шымкент (Тассай)",
+        "quantity": 0
+      }
+    ],
+    "image": "https://example.test/images/TEST-LED-30-B.jpg",
+    "url": "https://example.test/catalog/track_lights/TEST-LED-30-B/",
+    "offers": [],
+    "properties": {
+      "BRAND_PRIORITY": "1",
+      "CML2_ARTICLE": "TEST-LED-30-B",
+      "NOVINKA": "Нет",
+      "SPETSPREDLOZHENIE": "Нет",
+      "CML2_TRAITS": [
+        "Товары приобретенные",
+        "Товар",
+        "TEST-LED-30-B",
+        "Нет",
+        "Нет",
+        "Трековый светильник 30 Вт 2400 лм 4000 К IP20 (тестовый B)",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      "CML2_TAXES": "16",
+      "ARTIKULPOSTAVSHCHIKA": "TEST-LED-30-B",
+      "TORGOVAYA_MARKA": " MEGALIGHT",
+      "KATEGORIYA": "Трековый светильник"
+    }
+  },
+  {
+    "id": 900003,
+    "name": "Дифференциальный автомат 1P+N 16 А 30 мА (тестовый A)",
+    "article": "TEST-RCBO-16-A",
+    "description": "Синтетический товар для автоматических тестов. Число полюсов: 1P+N. Номинальный ток: 16 А. Ток утечки: 30 мА. Характеристика срабатывания: C. Тип дифференциального тока: A. Отключающая способность: 6 кА.",
+    "price": 9430,
+    "quantity": 16,
+    "stores": [
+      {
+        "id": 2,
+        "name": "Брак MEGALIGHT",
+        "quantity": 0
+      },
+      {
+        "id": 3,
+        "name": "Шымкент (ул.Байдукова)",
+        "quantity": 0
+      },
+      {
+        "id": 4,
+        "name": "Маркетинг MEGALIGHT",
+        "quantity": 0
+      },
+      {
+        "id": 5,
+        "name": "Никонов",
+        "quantity": 0
+      },
+      {
+        "id": 6,
+        "name": "РЦ MEGALIGHT",
+        "quantity": 0
+      },
+      {
+        "id": 7,
+        "name": "Талдыкорган",
+        "quantity": 0
+      },
+      {
+        "id": 8,
+        "name": "Тастак",
+        "quantity": 0
+      },
+      {
+        "id": 9,
+        "name": "Торговый зал",
+        "quantity": 0
+      },
+      {
+        "id": 10,
+        "name": "Востановленный продукт",
+        "quantity": 0
+      },
+      {
+        "id": 11,
+        "name": "перемещение",
+        "quantity": 0
+      },
+      {
+        "id": 12,
+        "name": "Основной склад",
+        "quantity": 16
+      },
+      {
+        "id": 13,
+        "name": "Алматы",
+        "quantity": 0
+      },
+      {
+        "id": 14,
+        "name": "ЩИТОВОЕ",
+        "quantity": 0
+      },
+      {
+        "id": 15,
+        "name": "РЦ UNIT",
+        "quantity": 0
+      },
+      {
+        "id": 16,
+        "name": "Образцы Отдел Закупа",
+        "quantity": 0
+      },
+      {
+        "id": 17,
+        "name": "Витрина ТЗ",
+        "quantity": 0
+      },
+      {
+        "id": 18,
+        "name": "Усть-Каменогорск",
+        "quantity": 0
+      },
+      {
+        "id": 19,
+        "name": "Тараз",
+        "quantity": 0
+      },
+      {
+        "id": 20,
+        "name": "Атырау",
+        "quantity": 0
+      },
+      {
+        "id": 21,
+        "name": "Караганда",
+        "quantity": 0
+      },
+      {
+        "id": 22,
+        "name": "Новосибирск",
+        "quantity": 0
+      },
+      {
+        "id": 23,
+        "name": "Актау",
+        "quantity": 0
+      },
+      {
+        "id": 24,
+        "name": "Нур-Султан",
+        "quantity": 0
+      },
+      {
+        "id": 25,
+        "name": "Шымкент (Тассай)",
+        "quantity": 0
+      }
+    ],
+    "image": null,
+    "url": "https://example.test/catalog/differential_breakers/TEST-RCBO-16-A/",
+    "offers": [],
+    "properties": {
+      "BRAND_PRIORITY": "1",
+      "CML2_ARTICLE": "TEST-RCBO-16-A",
+      "NOVINKA": "Нет",
+      "SPETSPREDLOZHENIE": "Да",
+      "CML2_TRAITS": [
+        "Товары приобретенные",
+        "Товар",
+        "TEST-RCBO-16-A",
+        "Нет",
+        "Да",
+        "Дифференциальный автомат 1P+N 16 А 30 мА (тестовый A)",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      "CML2_TAXES": "16",
+      "KRATNOST_MIN": "1",
+      "KRATNOST_MAKS": "1",
+      "KATEGORIYA": "Дифференциальный автомат"
+    }
+  },
+  {
+    "id": 900004,
+    "name": "Дифференциальный автомат 1P+N 16 А 30 мА (тестовый B)",
+    "article": "TEST-RCBO-16-B",
+    "description": "Синтетический товар для автоматических тестов. Число полюсов: 1P+N. Номинальный ток: 16 А. Ток утечки: 30 мА. Характеристика срабатывания: C. Тип дифференциального тока: A. Отключающая способность: 6 кА.",
+    "price": 9600,
+    "quantity": 12,
+    "stores": [
+      {
+        "id": 2,
+        "name": "Брак MEGALIGHT",
+        "quantity": 0
+      },
+      {
+        "id": 3,
+        "name": "Шымкент (ул.Байдукова)",
+        "quantity": 0
+      },
+      {
+        "id": 4,
+        "name": "Маркетинг MEGALIGHT",
+        "quantity": 0
+      },
+      {
+        "id": 5,
+        "name": "Никонов",
+        "quantity": 0
+      },
+      {
+        "id": 6,
+        "name": "РЦ MEGALIGHT",
+        "quantity": 0
+      },
+      {
+        "id": 7,
+        "name": "Талдыкорган",
+        "quantity": 0
+      },
+      {
+        "id": 8,
+        "name": "Тастак",
+        "quantity": 0
+      },
+      {
+        "id": 9,
+        "name": "Торговый зал",
+        "quantity": 0
+      },
+      {
+        "id": 10,
+        "name": "Востановленный продукт",
+        "quantity": 0
+      },
+      {
+        "id": 11,
+        "name": "перемещение",
+        "quantity": 0
+      },
+      {
+        "id": 12,
+        "name": "Основной склад",
+        "quantity": 12
+      },
+      {
+        "id": 13,
+        "name": "Алматы",
+        "quantity": 0
+      },
+      {
+        "id": 14,
+        "name": "ЩИТОВОЕ",
+        "quantity": 0
+      },
+      {
+        "id": 15,
+        "name": "РЦ UNIT",
+        "quantity": 0
+      },
+      {
+        "id": 16,
+        "name": "Образцы Отдел Закупа",
+        "quantity": 0
+      },
+      {
+        "id": 17,
+        "name": "Витрина ТЗ",
+        "quantity": 0
+      },
+      {
+        "id": 18,
+        "name": "Усть-Каменогорск",
+        "quantity": 0
+      },
+      {
+        "id": 19,
+        "name": "Тараз",
+        "quantity": 0
+      },
+      {
+        "id": 20,
+        "name": "Атырау",
+        "quantity": 0
+      },
+      {
+        "id": 21,
+        "name": "Караганда",
+        "quantity": 0
+      },
+      {
+        "id": 22,
+        "name": "Новосибирск",
+        "quantity": 0
+      },
+      {
+        "id": 23,
+        "name": "Актау",
+        "quantity": 0
+      },
+      {
+        "id": 24,
+        "name": "Нур-Султан",
+        "quantity": 0
+      },
+      {
+        "id": 25,
+        "name": "Шымкент (Тассай)",
+        "quantity": 0
+      }
+    ],
+    "image": null,
+    "url": "https://example.test/catalog/differential_breakers/TEST-RCBO-16-B/",
+    "offers": [],
+    "properties": {
+      "BRAND_PRIORITY": "1",
+      "CML2_ARTICLE": "TEST-RCBO-16-B",
+      "NOVINKA": "Нет",
+      "SPETSPREDLOZHENIE": "Да",
+      "CML2_TRAITS": [
+        "Товары приобретенные",
+        "Товар",
+        "TEST-RCBO-16-B",
+        "Нет",
+        "Да",
+        "Дифференциальный автомат 1P+N 16 А 30 мА (тестовый B)",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      "CML2_TAXES": "16",
+      "KRATNOST_MIN": "1",
+      "KRATNOST_MAKS": "1",
+      "KATEGORIYA": "Дифференциальный автомат"
+    }
+  },
+  {
+    "id": 900005,
+    "name": "Коробка распределительная 60x40 мм скрытого монтажа (тестовый A)",
+    "article": "TEST-BOX-60-A",
+    "description": "Синтетический товар для автоматических тестов. Размеры: 60x40 мм. Установка: скрытая. Материал: пластик. Степень защиты: IP20.",
+    "price": 53,
+    "quantity": 120,
+    "stores": [
+      {
+        "id": 2,
+        "name": "Брак MEGALIGHT",
+        "quantity": 0
+      },
+      {
+        "id": 3,
+        "name": "Шымкент (ул.Байдукова)",
+        "quantity": 0
+      },
+      {
+        "id": 4,
+        "name": "Маркетинг MEGALIGHT",
+        "quantity": 0
+      },
+      {
+        "id": 5,
+        "name": "Никонов",
+        "quantity": 0
+      },
+      {
+        "id": 6,
+        "name": "РЦ MEGALIGHT",
+        "quantity": 0
+      },
+      {
+        "id": 7,
+        "name": "Талдыкорган",
+        "quantity": 0
+      },
+      {
+        "id": 8,
+        "name": "Тастак",
+        "quantity": 0
+      },
+      {
+        "id": 9,
+        "name": "Торговый зал",
+        "quantity": 0
+      },
+      {
+        "id": 10,
+        "name": "Востановленный продукт",
+        "quantity": 0
+      },
+      {
+        "id": 11,
+        "name": "перемещение",
+        "quantity": 0
+      },
+      {
+        "id": 12,
+        "name": "Основной склад",
+        "quantity": 120
+      },
+      {
+        "id": 13,
+        "name": "Алматы",
+        "quantity": 0
+      },
+      {
+        "id": 14,
+        "name": "ЩИТОВОЕ",
+        "quantity": 0
+      },
+      {
+        "id": 15,
+        "name": "РЦ UNIT",
+        "quantity": 0
+      },
+      {
+        "id": 16,
+        "name": "Образцы Отдел Закупа",
+        "quantity": 0
+      },
+      {
+        "id": 17,
+        "name": "Витрина ТЗ",
+        "quantity": 0
+      },
+      {
+        "id": 18,
+        "name": "Усть-Каменогорск",
+        "quantity": 0
+      },
+      {
+        "id": 19,
+        "name": "Тараз",
+        "quantity": 0
+      },
+      {
+        "id": 20,
+        "name": "Атырау",
+        "quantity": 0
+      },
+      {
+        "id": 21,
+        "name": "Караганда",
+        "quantity": 0
+      },
+      {
+        "id": 22,
+        "name": "Новосибирск",
+        "quantity": 0
+      },
+      {
+        "id": 23,
+        "name": "Актау",
+        "quantity": 0
+      },
+      {
+        "id": 24,
+        "name": "Нур-Султан",
+        "quantity": 0
+      },
+      {
+        "id": 25,
+        "name": "Шымкент (Тассай)",
+        "quantity": 0
+      }
+    ],
+    "image": "https://example.test/images/TEST-BOX-60-A.jpg",
+    "url": "https://example.test/catalog/junction_boxes/TEST-BOX-60-A/",
+    "offers": [],
+    "properties": {
+      "BRAND_PRIORITY": "1",
+      "CML2_ARTICLE": "TEST-BOX-60-A",
+      "NOVINKA": "Нет",
+      "SPETSPREDLOZHENIE": "Нет",
+      "CML2_TRAITS": [
+        "Товары приобретенные",
+        "Товар",
+        "TEST-BOX-60-A",
+        "Нет",
+        "Нет",
+        "Коробка распределительная 60x40 мм скрытого монтажа (тестовый A)",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      "CML2_TAXES": "16",
+      "KRATNOST_MIN": "1",
+      "ARTIKULPOSTAVSHCHIKA": "TEST-BOX-60-A",
+      "KATEGORIYA": "Коробка распределительная",
+      "TIP_USTANOVKI": "Скрытая"
+    }
+  },
+  {
+    "id": 900006,
+    "name": "Коробка распределительная 60x40 мм скрытого монтажа (тестовый B)",
+    "article": "TEST-BOX-60-B",
+    "description": "Синтетический товар для автоматических тестов. Размеры: 60x40 мм. Установка: скрытая. Материал: пластик. Степень защиты: IP20.",
+    "price": 59,
+    "quantity": 80,
+    "stores": [
+      {
+        "id": 2,
+        "name": "Брак MEGALIGHT",
+        "quantity": 0
+      },
+      {
+        "id": 3,
+        "name": "Шымкент (ул.Байдукова)",
+        "quantity": 0
+      },
+      {
+        "id": 4,
+        "name": "Маркетинг MEGALIGHT",
+        "quantity": 0
+      },
+      {
+        "id": 5,
+        "name": "Никонов",
+        "quantity": 0
+      },
+      {
+        "id": 6,
+        "name": "РЦ MEGALIGHT",
+        "quantity": 0
+      },
+      {
+        "id": 7,
+        "name": "Талдыкорган",
+        "quantity": 0
+      },
+      {
+        "id": 8,
+        "name": "Тастак",
+        "quantity": 0
+      },
+      {
+        "id": 9,
+        "name": "Торговый зал",
+        "quantity": 0
+      },
+      {
+        "id": 10,
+        "name": "Востановленный продукт",
+        "quantity": 0
+      },
+      {
+        "id": 11,
+        "name": "перемещение",
+        "quantity": 0
+      },
+      {
+        "id": 12,
+        "name": "Основной склад",
+        "quantity": 80
+      },
+      {
+        "id": 13,
+        "name": "Алматы",
+        "quantity": 0
+      },
+      {
+        "id": 14,
+        "name": "ЩИТОВОЕ",
+        "quantity": 0
+      },
+      {
+        "id": 15,
+        "name": "РЦ UNIT",
+        "quantity": 0
+      },
+      {
+        "id": 16,
+        "name": "Образцы Отдел Закупа",
+        "quantity": 0
+      },
+      {
+        "id": 17,
+        "name": "Витрина ТЗ",
+        "quantity": 0
+      },
+      {
+        "id": 18,
+        "name": "Усть-Каменогорск",
+        "quantity": 0
+      },
+      {
+        "id": 19,
+        "name": "Тараз",
+        "quantity": 0
+      },
+      {
+        "id": 20,
+        "name": "Атырау",
+        "quantity": 0
+      },
+      {
+        "id": 21,
+        "name": "Караганда",
+        "quantity": 0
+      },
+      {
+        "id": 22,
+        "name": "Новосибирск",
+        "quantity": 0
+      },
+      {
+        "id": 23,
+        "name": "Актау",
+        "quantity": 0
+      },
+      {
+        "id": 24,
+        "name": "Нур-Султан",
+        "quantity": 0
+      },
+      {
+        "id": 25,
+        "name": "Шымкент (Тассай)",
+        "quantity": 0
+      }
+    ],
+    "image": "https://example.test/images/TEST-BOX-60-B.jpg",
+    "url": "https://example.test/catalog/junction_boxes/TEST-BOX-60-B/",
+    "offers": [],
+    "properties": {
+      "BRAND_PRIORITY": "1",
+      "CML2_ARTICLE": "TEST-BOX-60-B",
+      "NOVINKA": "Нет",
+      "SPETSPREDLOZHENIE": "Нет",
+      "CML2_TRAITS": [
+        "Товары приобретенные",
+        "Товар",
+        "TEST-BOX-60-B",
+        "Нет",
+        "Нет",
+        "Коробка распределительная 60x40 мм скрытого монтажа (тестовый B)",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      "CML2_TAXES": "16",
+      "KRATNOST_MIN": "1",
+      "ARTIKULPOSTAVSHCHIKA": "TEST-BOX-60-B",
+      "KATEGORIYA": "Коробка распределительная",
+      "TIP_USTANOVKI": "Скрытая"
+    }
+  },
+  {
+    "id": 900007,
+    "name": "Коробка распределительная 97x50 мм скрытого монтажа (тестовый A)",
+    "article": "TEST-BOX-97-A",
+    "description": "Синтетический товар для автоматических тестов. Размеры: 97x50 мм. Установка: скрытая. Материал: пластик. Степень защиты: IP20.",
+    "price": 199,
+    "quantity": 60,
+    "stores": [
+      {
+        "id": 2,
+        "name": "Брак MEGALIGHT",
+        "quantity": 0
+      },
+      {
+        "id": 3,
+        "name": "Шымкент (ул.Байдукова)",
+        "quantity": 0
+      },
+      {
+        "id": 4,
+        "name": "Маркетинг MEGALIGHT",
+        "quantity": 0
+      },
+      {
+        "id": 5,
+        "name": "Никонов",
+        "quantity": 0
+      },
+      {
+        "id": 6,
+        "name": "РЦ MEGALIGHT",
+        "quantity": 0
+      },
+      {
+        "id": 7,
+        "name": "Талдыкорган",
+        "quantity": 0
+      },
+      {
+        "id": 8,
+        "name": "Тастак",
+        "quantity": 0
+      },
+      {
+        "id": 9,
+        "name": "Торговый зал",
+        "quantity": 0
+      },
+      {
+        "id": 10,
+        "name": "Востановленный продукт",
+        "quantity": 0
+      },
+      {
+        "id": 11,
+        "name": "перемещение",
+        "quantity": 0
+      },
+      {
+        "id": 12,
+        "name": "Основной склад",
+        "quantity": 60
+      },
+      {
+        "id": 13,
+        "name": "Алматы",
+        "quantity": 0
+      },
+      {
+        "id": 14,
+        "name": "ЩИТОВОЕ",
+        "quantity": 0
+      },
+      {
+        "id": 15,
+        "name": "РЦ UNIT",
+        "quantity": 0
+      },
+      {
+        "id": 16,
+        "name": "Образцы Отдел Закупа",
+        "quantity": 0
+      },
+      {
+        "id": 17,
+        "name": "Витрина ТЗ",
+        "quantity": 0
+      },
+      {
+        "id": 18,
+        "name": "Усть-Каменогорск",
+        "quantity": 0
+      },
+      {
+        "id": 19,
+        "name": "Тараз",
+        "quantity": 0
+      },
+      {
+        "id": 20,
+        "name": "Атырау",
+        "quantity": 0
+      },
+      {
+        "id": 21,
+        "name": "Караганда",
+        "quantity": 0
+      },
+      {
+        "id": 22,
+        "name": "Новосибирск",
+        "quantity": 0
+      },
+      {
+        "id": 23,
+        "name": "Актау",
+        "quantity": 0
+      },
+      {
+        "id": 24,
+        "name": "Нур-Султан",
+        "quantity": 0
+      },
+      {
+        "id": 25,
+        "name": "Шымкент (Тассай)",
+        "quantity": 0
+      }
+    ],
+    "image": "https://example.test/images/TEST-BOX-97-A.jpg",
+    "url": "https://example.test/catalog/junction_boxes/TEST-BOX-97-A/",
+    "offers": [],
+    "properties": {
+      "BRAND_PRIORITY": "1",
+      "CML2_ARTICLE": "TEST-BOX-97-A",
+      "NOVINKA": "Нет",
+      "SPETSPREDLOZHENIE": "Нет",
+      "CML2_TRAITS": [
+        "Товары приобретенные",
+        "Товар",
+        "TEST-BOX-97-A",
+        "Нет",
+        "Нет",
+        "Коробка распределительная 97x50 мм скрытого монтажа (тестовый A)",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      "CML2_TAXES": "16",
+      "KRATNOST_MIN": "1",
+      "ARTIKULPOSTAVSHCHIKA": "TEST-BOX-97-A",
+      "KATEGORIYA": "Коробка распределительная",
+      "TIP_USTANOVKI": "Скрытая"
+    }
+  },
+  {
+    "id": 900008,
+    "name": "Коробка распределительная 97x50 мм скрытого монтажа (тестовый B)",
+    "article": "TEST-BOX-97-B",
+    "description": "Синтетический товар для автоматических тестов. Размеры: 97x50 мм. Установка: скрытая. Материал: пластик. Степень защиты: IP20.",
+    "price": 209,
+    "quantity": 40,
+    "stores": [
+      {
+        "id": 2,
+        "name": "Брак MEGALIGHT",
+        "quantity": 0
+      },
+      {
+        "id": 3,
+        "name": "Шымкент (ул.Байдукова)",
+        "quantity": 0
+      },
+      {
+        "id": 4,
+        "name": "Маркетинг MEGALIGHT",
+        "quantity": 0
+      },
+      {
+        "id": 5,
+        "name": "Никонов",
+        "quantity": 0
+      },
+      {
+        "id": 6,
+        "name": "РЦ MEGALIGHT",
+        "quantity": 0
+      },
+      {
+        "id": 7,
+        "name": "Талдыкорган",
+        "quantity": 0
+      },
+      {
+        "id": 8,
+        "name": "Тастак",
+        "quantity": 0
+      },
+      {
+        "id": 9,
+        "name": "Торговый зал",
+        "quantity": 0
+      },
+      {
+        "id": 10,
+        "name": "Востановленный продукт",
+        "quantity": 0
+      },
+      {
+        "id": 11,
+        "name": "перемещение",
+        "quantity": 0
+      },
+      {
+        "id": 12,
+        "name": "Основной склад",
+        "quantity": 40
+      },
+      {
+        "id": 13,
+        "name": "Алматы",
+        "quantity": 0
+      },
+      {
+        "id": 14,
+        "name": "ЩИТОВОЕ",
+        "quantity": 0
+      },
+      {
+        "id": 15,
+        "name": "РЦ UNIT",
+        "quantity": 0
+      },
+      {
+        "id": 16,
+        "name": "Образцы Отдел Закупа",
+        "quantity": 0
+      },
+      {
+        "id": 17,
+        "name": "Витрина ТЗ",
+        "quantity": 0
+      },
+      {
+        "id": 18,
+        "name": "Усть-Каменогорск",
+        "quantity": 0
+      },
+      {
+        "id": 19,
+        "name": "Тараз",
+        "quantity": 0
+      },
+      {
+        "id": 20,
+        "name": "Атырау",
+        "quantity": 0
+      },
+      {
+        "id": 21,
+        "name": "Караганда",
+        "quantity": 0
+      },
+      {
+        "id": 22,
+        "name": "Новосибирск",
+        "quantity": 0
+      },
+      {
+        "id": 23,
+        "name": "Актау",
+        "quantity": 0
+      },
+      {
+        "id": 24,
+        "name": "Нур-Султан",
+        "quantity": 0
+      },
+      {
+        "id": 25,
+        "name": "Шымкент (Тассай)",
+        "quantity": 0
+      }
+    ],
+    "image": "https://example.test/images/TEST-BOX-97-B.jpg",
+    "url": "https://example.test/catalog/junction_boxes/TEST-BOX-97-B/",
+    "offers": [],
+    "properties": {
+      "BRAND_PRIORITY": "1",
+      "CML2_ARTICLE": "TEST-BOX-97-B",
+      "NOVINKA": "Нет",
+      "SPETSPREDLOZHENIE": "Нет",
+      "CML2_TRAITS": [
+        "Товары приобретенные",
+        "Товар",
+        "TEST-BOX-97-B",
+        "Нет",
+        "Нет",
+        "Коробка распределительная 97x50 мм скрытого монтажа (тестовый B)",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      "CML2_TAXES": "16",
+      "KRATNOST_MIN": "1",
+      "ARTIKULPOSTAVSHCHIKA": "TEST-BOX-97-B",
+      "KATEGORIYA": "Коробка распределительная",
+      "TIP_USTANOVKI": "Скрытая"
+    }
+  },
+  {
+    "id": 900009,
+    "name": "Трековый светильник 30 Вт 2400 лм 4000 К IP20 (тестовый ZERO)",
+    "article": "TEST-LED-30-ZERO",
+    "description": "Синтетический товар для автоматических тестов. Мощность: 30 Вт. Световой поток: 2400 лм. Цветовая температура: 4000 К. Степень защиты: IP20. Монтаж: двухлинейный шинопровод.",
+    "price": 1810,
+    "quantity": 0,
+    "stores": [
+      {
+        "id": 2,
+        "name": "Брак MEGALIGHT",
+        "quantity": 0
+      },
+      {
+        "id": 3,
+        "name": "Шымкент (ул.Байдукова)",
+        "quantity": 0
+      },
+      {
+        "id": 4,
+        "name": "Маркетинг MEGALIGHT",
+        "quantity": 0
+      },
+      {
+        "id": 5,
+        "name": "Никонов",
+        "quantity": 0
+      },
+      {
+        "id": 6,
+        "name": "РЦ MEGALIGHT",
+        "quantity": 0
+      },
+      {
+        "id": 7,
+        "name": "Талдыкорган",
+        "quantity": 0
+      },
+      {
+        "id": 8,
+        "name": "Тастак",
+        "quantity": 0
+      },
+      {
+        "id": 9,
+        "name": "Торговый зал",
+        "quantity": 0
+      },
+      {
+        "id": 10,
+        "name": "Востановленный продукт",
+        "quantity": 0
+      },
+      {
+        "id": 11,
+        "name": "перемещение",
+        "quantity": 0
+      },
+      {
+        "id": 12,
+        "name": "Основной склад",
+        "quantity": 0
+      },
+      {
+        "id": 13,
+        "name": "Алматы",
+        "quantity": 0
+      },
+      {
+        "id": 14,
+        "name": "ЩИТОВОЕ",
+        "quantity": 0
+      },
+      {
+        "id": 15,
+        "name": "РЦ UNIT",
+        "quantity": 0
+      },
+      {
+        "id": 16,
+        "name": "Образцы Отдел Закупа",
+        "quantity": 0
+      },
+      {
+        "id": 17,
+        "name": "Витрина ТЗ",
+        "quantity": 0
+      },
+      {
+        "id": 18,
+        "name": "Усть-Каменогорск",
+        "quantity": 0
+      },
+      {
+        "id": 19,
+        "name": "Тараз",
+        "quantity": 0
+      },
+      {
+        "id": 20,
+        "name": "Атырау",
+        "quantity": 0
+      },
+      {
+        "id": 21,
+        "name": "Караганда",
+        "quantity": 0
+      },
+      {
+        "id": 22,
+        "name": "Новосибирск",
+        "quantity": 0
+      },
+      {
+        "id": 23,
+        "name": "Актау",
+        "quantity": 0
+      },
+      {
+        "id": 24,
+        "name": "Нур-Султан",
+        "quantity": 0
+      },
+      {
+        "id": 25,
+        "name": "Шымкент (Тассай)",
+        "quantity": 0
+      }
+    ],
+    "image": "https://example.test/images/TEST-LED-30-ZERO.jpg",
+    "url": "https://example.test/catalog/track_lights/TEST-LED-30-ZERO/",
+    "offers": [],
+    "properties": {
+      "BRAND_PRIORITY": "1",
+      "CML2_ARTICLE": "TEST-LED-30-ZERO",
+      "NOVINKA": "Нет",
+      "SPETSPREDLOZHENIE": "Нет",
+      "CML2_TRAITS": [
+        "Товары приобретенные",
+        "Товар",
+        "TEST-LED-30-ZERO",
+        "Нет",
+        "Нет",
+        "Трековый светильник 30 Вт 2400 лм 4000 К IP20 (тестовый ZERO)",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      "CML2_TAXES": "16",
+      "ARTIKULPOSTAVSHCHIKA": "TEST-LED-30-ZERO",
+      "TORGOVAYA_MARKA": " MEGALIGHT",
+      "KATEGORIYA": "Трековый светильник"
+    }
+  },
+  {
+    "id": 900010,
+    "name": "Дифференциальный автомат 1P+N 16 А 30 мА (тестовый ZERO)",
+    "article": "TEST-RCBO-16-ZERO",
+    "description": "Синтетический товар для автоматических тестов. Число полюсов: 1P+N. Номинальный ток: 16 А. Ток утечки: 30 мА. Характеристика срабатывания: C. Тип дифференциального тока: A. Отключающая способность: 6 кА.",
+    "price": 9430,
+    "quantity": 0,
+    "stores": [
+      {
+        "id": 2,
+        "name": "Брак MEGALIGHT",
+        "quantity": 0
+      },
+      {
+        "id": 3,
+        "name": "Шымкент (ул.Байдукова)",
+        "quantity": 0
+      },
+      {
+        "id": 4,
+        "name": "Маркетинг MEGALIGHT",
+        "quantity": 0
+      },
+      {
+        "id": 5,
+        "name": "Никонов",
+        "quantity": 0
+      },
+      {
+        "id": 6,
+        "name": "РЦ MEGALIGHT",
+        "quantity": 0
+      },
+      {
+        "id": 7,
+        "name": "Талдыкорган",
+        "quantity": 0
+      },
+      {
+        "id": 8,
+        "name": "Тастак",
+        "quantity": 0
+      },
+      {
+        "id": 9,
+        "name": "Торговый зал",
+        "quantity": 0
+      },
+      {
+        "id": 10,
+        "name": "Востановленный продукт",
+        "quantity": 0
+      },
+      {
+        "id": 11,
+        "name": "перемещение",
+        "quantity": 0
+      },
+      {
+        "id": 12,
+        "name": "Основной склад",
+        "quantity": 0
+      },
+      {
+        "id": 13,
+        "name": "Алматы",
+        "quantity": 0
+      },
+      {
+        "id": 14,
+        "name": "ЩИТОВОЕ",
+        "quantity": 0
+      },
+      {
+        "id": 15,
+        "name": "РЦ UNIT",
+        "quantity": 0
+      },
+      {
+        "id": 16,
+        "name": "Образцы Отдел Закупа",
+        "quantity": 0
+      },
+      {
+        "id": 17,
+        "name": "Витрина ТЗ",
+        "quantity": 0
+      },
+      {
+        "id": 18,
+        "name": "Усть-Каменогорск",
+        "quantity": 0
+      },
+      {
+        "id": 19,
+        "name": "Тараз",
+        "quantity": 0
+      },
+      {
+        "id": 20,
+        "name": "Атырау",
+        "quantity": 0
+      },
+      {
+        "id": 21,
+        "name": "Караганда",
+        "quantity": 0
+      },
+      {
+        "id": 22,
+        "name": "Новосибирск",
+        "quantity": 0
+      },
+      {
+        "id": 23,
+        "name": "Актау",
+        "quantity": 0
+      },
+      {
+        "id": 24,
+        "name": "Нур-Султан",
+        "quantity": 0
+      },
+      {
+        "id": 25,
+        "name": "Шымкент (Тассай)",
+        "quantity": 0
+      }
+    ],
+    "image": null,
+    "url": "https://example.test/catalog/differential_breakers/TEST-RCBO-16-ZERO/",
+    "offers": [],
+    "properties": {
+      "BRAND_PRIORITY": "1",
+      "CML2_ARTICLE": "TEST-RCBO-16-ZERO",
+      "NOVINKA": "Нет",
+      "SPETSPREDLOZHENIE": "Да",
+      "CML2_TRAITS": [
+        "Товары приобретенные",
+        "Товар",
+        "TEST-RCBO-16-ZERO",
+        "Нет",
+        "Да",
+        "Дифференциальный автомат 1P+N 16 А 30 мА (тестовый ZERO)",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      "CML2_TAXES": "16",
+      "KRATNOST_MIN": "1",
+      "KRATNOST_MAKS": "1",
+      "KATEGORIYA": "Дифференциальный автомат"
+    }
+  },
+  {
+    "id": 900011,
+    "name": "Коробка распределительная 60x40 мм скрытого монтажа (тестовый ZERO)",
+    "article": "TEST-BOX-60-ZERO",
+    "description": "Синтетический товар для автоматических тестов. Размеры: 60x40 мм. Установка: скрытая. Материал: пластик. Степень защиты: IP20.",
+    "price": 53,
+    "quantity": 0,
+    "stores": [
+      {
+        "id": 2,
+        "name": "Брак MEGALIGHT",
+        "quantity": 0
+      },
+      {
+        "id": 3,
+        "name": "Шымкент (ул.Байдукова)",
+        "quantity": 0
+      },
+      {
+        "id": 4,
+        "name": "Маркетинг MEGALIGHT",
+        "quantity": 0
+      },
+      {
+        "id": 5,
+        "name": "Никонов",
+        "quantity": 0
+      },
+      {
+        "id": 6,
+        "name": "РЦ MEGALIGHT",
+        "quantity": 0
+      },
+      {
+        "id": 7,
+        "name": "Талдыкорган",
+        "quantity": 0
+      },
+      {
+        "id": 8,
+        "name": "Тастак",
+        "quantity": 0
+      },
+      {
+        "id": 9,
+        "name": "Торговый зал",
+        "quantity": 0
+      },
+      {
+        "id": 10,
+        "name": "Востановленный продукт",
+        "quantity": 0
+      },
+      {
+        "id": 11,
+        "name": "перемещение",
+        "quantity": 0
+      },
+      {
+        "id": 12,
+        "name": "Основной склад",
+        "quantity": 0
+      },
+      {
+        "id": 13,
+        "name": "Алматы",
+        "quantity": 0
+      },
+      {
+        "id": 14,
+        "name": "ЩИТОВОЕ",
+        "quantity": 0
+      },
+      {
+        "id": 15,
+        "name": "РЦ UNIT",
+        "quantity": 0
+      },
+      {
+        "id": 16,
+        "name": "Образцы Отдел Закупа",
+        "quantity": 0
+      },
+      {
+        "id": 17,
+        "name": "Витрина ТЗ",
+        "quantity": 0
+      },
+      {
+        "id": 18,
+        "name": "Усть-Каменогорск",
+        "quantity": 0
+      },
+      {
+        "id": 19,
+        "name": "Тараз",
+        "quantity": 0
+      },
+      {
+        "id": 20,
+        "name": "Атырау",
+        "quantity": 0
+      },
+      {
+        "id": 21,
+        "name": "Караганда",
+        "quantity": 0
+      },
+      {
+        "id": 22,
+        "name": "Новосибирск",
+        "quantity": 0
+      },
+      {
+        "id": 23,
+        "name": "Актау",
+        "quantity": 0
+      },
+      {
+        "id": 24,
+        "name": "Нур-Султан",
+        "quantity": 0
+      },
+      {
+        "id": 25,
+        "name": "Шымкент (Тассай)",
+        "quantity": 0
+      }
+    ],
+    "image": "https://example.test/images/TEST-BOX-60-ZERO.jpg",
+    "url": "https://example.test/catalog/junction_boxes/TEST-BOX-60-ZERO/",
+    "offers": [],
+    "properties": {
+      "BRAND_PRIORITY": "1",
+      "CML2_ARTICLE": "TEST-BOX-60-ZERO",
+      "NOVINKA": "Нет",
+      "SPETSPREDLOZHENIE": "Нет",
+      "CML2_TRAITS": [
+        "Товары приобретенные",
+        "Товар",
+        "TEST-BOX-60-ZERO",
+        "Нет",
+        "Нет",
+        "Коробка распределительная 60x40 мм скрытого монтажа (тестовый ZERO)",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      "CML2_TAXES": "16",
+      "KRATNOST_MIN": "1",
+      "ARTIKULPOSTAVSHCHIKA": "TEST-BOX-60-ZERO",
+      "KATEGORIYA": "Коробка распределительная",
+      "TIP_USTANOVKI": "Скрытая"
+    }
+  },
+  {
+    "id": 900012,
+    "name": "Коробка распределительная 97x50 мм скрытого монтажа (тестовый ZERO)",
+    "article": "TEST-BOX-97-ZERO",
+    "description": "Синтетический товар для автоматических тестов. Размеры: 97x50 мм. Установка: скрытая. Материал: пластик. Степень защиты: IP20.",
+    "price": 199,
+    "quantity": 0,
+    "stores": [
+      {
+        "id": 2,
+        "name": "Брак MEGALIGHT",
+        "quantity": 0
+      },
+      {
+        "id": 3,
+        "name": "Шымкент (ул.Байдукова)",
+        "quantity": 0
+      },
+      {
+        "id": 4,
+        "name": "Маркетинг MEGALIGHT",
+        "quantity": 0
+      },
+      {
+        "id": 5,
+        "name": "Никонов",
+        "quantity": 0
+      },
+      {
+        "id": 6,
+        "name": "РЦ MEGALIGHT",
+        "quantity": 0
+      },
+      {
+        "id": 7,
+        "name": "Талдыкорган",
+        "quantity": 0
+      },
+      {
+        "id": 8,
+        "name": "Тастак",
+        "quantity": 0
+      },
+      {
+        "id": 9,
+        "name": "Торговый зал",
+        "quantity": 0
+      },
+      {
+        "id": 10,
+        "name": "Востановленный продукт",
+        "quantity": 0
+      },
+      {
+        "id": 11,
+        "name": "перемещение",
+        "quantity": 0
+      },
+      {
+        "id": 12,
+        "name": "Основной склад",
+        "quantity": 0
+      },
+      {
+        "id": 13,
+        "name": "Алматы",
+        "quantity": 0
+      },
+      {
+        "id": 14,
+        "name": "ЩИТОВОЕ",
+        "quantity": 0
+      },
+      {
+        "id": 15,
+        "name": "РЦ UNIT",
+        "quantity": 0
+      },
+      {
+        "id": 16,
+        "name": "Образцы Отдел Закупа",
+        "quantity": 0
+      },
+      {
+        "id": 17,
+        "name": "Витрина ТЗ",
+        "quantity": 0
+      },
+      {
+        "id": 18,
+        "name": "Усть-Каменогорск",
+        "quantity": 0
+      },
+      {
+        "id": 19,
+        "name": "Тараз",
+        "quantity": 0
+      },
+      {
+        "id": 20,
+        "name": "Атырау",
+        "quantity": 0
+      },
+      {
+        "id": 21,
+        "name": "Караганда",
+        "quantity": 0
+      },
+      {
+        "id": 22,
+        "name": "Новосибирск",
+        "quantity": 0
+      },
+      {
+        "id": 23,
+        "name": "Актау",
+        "quantity": 0
+      },
+      {
+        "id": 24,
+        "name": "Нур-Султан",
+        "quantity": 0
+      },
+      {
+        "id": 25,
+        "name": "Шымкент (Тассай)",
+        "quantity": 0
+      }
+    ],
+    "image": "https://example.test/images/TEST-BOX-97-ZERO.jpg",
+    "url": "https://example.test/catalog/junction_boxes/TEST-BOX-97-ZERO/",
+    "offers": [],
+    "properties": {
+      "BRAND_PRIORITY": "1",
+      "CML2_ARTICLE": "TEST-BOX-97-ZERO",
+      "NOVINKA": "Нет",
+      "SPETSPREDLOZHENIE": "Нет",
+      "CML2_TRAITS": [
+        "Товары приобретенные",
+        "Товар",
+        "TEST-BOX-97-ZERO",
+        "Нет",
+        "Нет",
+        "Коробка распределительная 97x50 мм скрытого монтажа (тестовый ZERO)",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      "CML2_TAXES": "16",
+      "KRATNOST_MIN": "1",
+      "ARTIKULPOSTAVSHCHIKA": "TEST-BOX-97-ZERO",
+      "KATEGORIYA": "Коробка распределительная",
+      "TIP_USTANOVKI": "Скрытая"
+    }
+  },
+  {
+    "id": 900013,
+    "name": "Трековый светильник 30 Вт 2400 лм 4000 К IP20 (тестовый CERT)",
+    "article": "TEST-LED-30-CERT",
+    "description": "Синтетический товар для автоматических тестов. Мощность: 30 Вт. Световой поток: 2400 лм. Цветовая температура: 4000 К. Степень защиты: IP20. Монтаж: двухлинейный шинопровод. Сертификат соответствия (тестовый документ): https://example.test/certificates/TEST-LED-30-CERT.pdf",
+    "price": 1810,
+    "quantity": 10,
+    "stores": [
+      {
+        "id": 2,
+        "name": "Брак MEGALIGHT",
+        "quantity": 0
+      },
+      {
+        "id": 3,
+        "name": "Шымкент (ул.Байдукова)",
+        "quantity": 0
+      },
+      {
+        "id": 4,
+        "name": "Маркетинг MEGALIGHT",
+        "quantity": 0
+      },
+      {
+        "id": 5,
+        "name": "Никонов",
+        "quantity": 0
+      },
+      {
+        "id": 6,
+        "name": "РЦ MEGALIGHT",
+        "quantity": 0
+      },
+      {
+        "id": 7,
+        "name": "Талдыкорган",
+        "quantity": 0
+      },
+      {
+        "id": 8,
+        "name": "Тастак",
+        "quantity": 0
+      },
+      {
+        "id": 9,
+        "name": "Торговый зал",
+        "quantity": 0
+      },
+      {
+        "id": 10,
+        "name": "Востановленный продукт",
+        "quantity": 0
+      },
+      {
+        "id": 11,
+        "name": "перемещение",
+        "quantity": 0
+      },
+      {
+        "id": 12,
+        "name": "Основной склад",
+        "quantity": 10
+      },
+      {
+        "id": 13,
+        "name": "Алматы",
+        "quantity": 0
+      },
+      {
+        "id": 14,
+        "name": "ЩИТОВОЕ",
+        "quantity": 0
+      },
+      {
+        "id": 15,
+        "name": "РЦ UNIT",
+        "quantity": 0
+      },
+      {
+        "id": 16,
+        "name": "Образцы Отдел Закупа",
+        "quantity": 0
+      },
+      {
+        "id": 17,
+        "name": "Витрина ТЗ",
+        "quantity": 0
+      },
+      {
+        "id": 18,
+        "name": "Усть-Каменогорск",
+        "quantity": 0
+      },
+      {
+        "id": 19,
+        "name": "Тараз",
+        "quantity": 0
+      },
+      {
+        "id": 20,
+        "name": "Атырау",
+        "quantity": 0
+      },
+      {
+        "id": 21,
+        "name": "Караганда",
+        "quantity": 0
+      },
+      {
+        "id": 22,
+        "name": "Новосибирск",
+        "quantity": 0
+      },
+      {
+        "id": 23,
+        "name": "Актау",
+        "quantity": 0
+      },
+      {
+        "id": 24,
+        "name": "Нур-Султан",
+        "quantity": 0
+      },
+      {
+        "id": 25,
+        "name": "Шымкент (Тассай)",
+        "quantity": 0
+      }
+    ],
+    "image": "https://example.test/images/TEST-LED-30-CERT.jpg",
+    "url": "https://example.test/catalog/track_lights/TEST-LED-30-CERT/",
+    "offers": [],
+    "properties": {
+      "BRAND_PRIORITY": "1",
+      "CML2_ARTICLE": "TEST-LED-30-CERT",
+      "NOVINKA": "Нет",
+      "SPETSPREDLOZHENIE": "Нет",
+      "CML2_TRAITS": [
+        "Товары приобретенные",
+        "Товар",
+        "TEST-LED-30-CERT",
+        "Нет",
+        "Нет",
+        "Трековый светильник 30 Вт 2400 лм 4000 К IP20 (тестовый CERT)",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      "CML2_TAXES": "16",
+      "ARTIKULPOSTAVSHCHIKA": "TEST-LED-30-CERT",
+      "TORGOVAYA_MARKA": " MEGALIGHT",
+      "KATEGORIYA": "Трековый светильник"
+    }
+  },
+  {
+    "id": 900014,
+    "name": "Дифференциальный автомат 1P+N 16 А 30 мА (тестовый CERT)",
+    "article": "TEST-RCBO-16-CERT",
+    "description": "Синтетический товар для автоматических тестов. Число полюсов: 1P+N. Номинальный ток: 16 А. Ток утечки: 30 мА. Характеристика срабатывания: C. Тип дифференциального тока: A. Отключающая способность: 6 кА. Сертификат соответствия (тестовый документ): https://example.test/certificates/TEST-RCBO-16-CERT.pdf",
+    "price": 9430,
+    "quantity": 8,
+    "stores": [
+      {
+        "id": 2,
+        "name": "Брак MEGALIGHT",
+        "quantity": 0
+      },
+      {
+        "id": 3,
+        "name": "Шымкент (ул.Байдукова)",
+        "quantity": 0
+      },
+      {
+        "id": 4,
+        "name": "Маркетинг MEGALIGHT",
+        "quantity": 0
+      },
+      {
+        "id": 5,
+        "name": "Никонов",
+        "quantity": 0
+      },
+      {
+        "id": 6,
+        "name": "РЦ MEGALIGHT",
+        "quantity": 0
+      },
+      {
+        "id": 7,
+        "name": "Талдыкорган",
+        "quantity": 0
+      },
+      {
+        "id": 8,
+        "name": "Тастак",
+        "quantity": 0
+      },
+      {
+        "id": 9,
+        "name": "Торговый зал",
+        "quantity": 0
+      },
+      {
+        "id": 10,
+        "name": "Востановленный продукт",
+        "quantity": 0
+      },
+      {
+        "id": 11,
+        "name": "перемещение",
+        "quantity": 0
+      },
+      {
+        "id": 12,
+        "name": "Основной склад",
+        "quantity": 8
+      },
+      {
+        "id": 13,
+        "name": "Алматы",
+        "quantity": 0
+      },
+      {
+        "id": 14,
+        "name": "ЩИТОВОЕ",
+        "quantity": 0
+      },
+      {
+        "id": 15,
+        "name": "РЦ UNIT",
+        "quantity": 0
+      },
+      {
+        "id": 16,
+        "name": "Образцы Отдел Закупа",
+        "quantity": 0
+      },
+      {
+        "id": 17,
+        "name": "Витрина ТЗ",
+        "quantity": 0
+      },
+      {
+        "id": 18,
+        "name": "Усть-Каменогорск",
+        "quantity": 0
+      },
+      {
+        "id": 19,
+        "name": "Тараз",
+        "quantity": 0
+      },
+      {
+        "id": 20,
+        "name": "Атырау",
+        "quantity": 0
+      },
+      {
+        "id": 21,
+        "name": "Караганда",
+        "quantity": 0
+      },
+      {
+        "id": 22,
+        "name": "Новосибирск",
+        "quantity": 0
+      },
+      {
+        "id": 23,
+        "name": "Актау",
+        "quantity": 0
+      },
+      {
+        "id": 24,
+        "name": "Нур-Султан",
+        "quantity": 0
+      },
+      {
+        "id": 25,
+        "name": "Шымкент (Тассай)",
+        "quantity": 0
+      }
+    ],
+    "image": null,
+    "url": "https://example.test/catalog/differential_breakers/TEST-RCBO-16-CERT/",
+    "offers": [],
+    "properties": {
+      "BRAND_PRIORITY": "1",
+      "CML2_ARTICLE": "TEST-RCBO-16-CERT",
+      "NOVINKA": "Нет",
+      "SPETSPREDLOZHENIE": "Да",
+      "CML2_TRAITS": [
+        "Товары приобретенные",
+        "Товар",
+        "TEST-RCBO-16-CERT",
+        "Нет",
+        "Да",
+        "Дифференциальный автомат 1P+N 16 А 30 мА (тестовый CERT)",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      "CML2_TAXES": "16",
+      "KRATNOST_MIN": "1",
+      "KRATNOST_MAKS": "1",
+      "KATEGORIYA": "Дифференциальный автомат"
+    }
+  },
+  {
+    "id": 900015,
+    "name": "Коробка распределительная 60x40 мм скрытого монтажа (тестовый LOW)",
+    "article": "TEST-BOX-60-LOW",
+    "description": "Синтетический товар для автоматических тестов. Размеры: 60x40 мм. Установка: скрытая. Материал: пластик. Степень защиты: IP20.",
+    "price": 53,
+    "quantity": 3,
+    "stores": [
+      {
+        "id": 2,
+        "name": "Брак MEGALIGHT",
+        "quantity": 0
+      },
+      {
+        "id": 3,
+        "name": "Шымкент (ул.Байдукова)",
+        "quantity": 0
+      },
+      {
+        "id": 4,
+        "name": "Маркетинг MEGALIGHT",
+        "quantity": 0
+      },
+      {
+        "id": 5,
+        "name": "Никонов",
+        "quantity": 0
+      },
+      {
+        "id": 6,
+        "name": "РЦ MEGALIGHT",
+        "quantity": 0
+      },
+      {
+        "id": 7,
+        "name": "Талдыкорган",
+        "quantity": 0
+      },
+      {
+        "id": 8,
+        "name": "Тастак",
+        "quantity": 0
+      },
+      {
+        "id": 9,
+        "name": "Торговый зал",
+        "quantity": 0
+      },
+      {
+        "id": 10,
+        "name": "Востановленный продукт",
+        "quantity": 0
+      },
+      {
+        "id": 11,
+        "name": "перемещение",
+        "quantity": 0
+      },
+      {
+        "id": 12,
+        "name": "Основной склад",
+        "quantity": 3
+      },
+      {
+        "id": 13,
+        "name": "Алматы",
+        "quantity": 0
+      },
+      {
+        "id": 14,
+        "name": "ЩИТОВОЕ",
+        "quantity": 0
+      },
+      {
+        "id": 15,
+        "name": "РЦ UNIT",
+        "quantity": 0
+      },
+      {
+        "id": 16,
+        "name": "Образцы Отдел Закупа",
+        "quantity": 0
+      },
+      {
+        "id": 17,
+        "name": "Витрина ТЗ",
+        "quantity": 0
+      },
+      {
+        "id": 18,
+        "name": "Усть-Каменогорск",
+        "quantity": 0
+      },
+      {
+        "id": 19,
+        "name": "Тараз",
+        "quantity": 0
+      },
+      {
+        "id": 20,
+        "name": "Атырау",
+        "quantity": 0
+      },
+      {
+        "id": 21,
+        "name": "Караганда",
+        "quantity": 0
+      },
+      {
+        "id": 22,
+        "name": "Новосибирск",
+        "quantity": 0
+      },
+      {
+        "id": 23,
+        "name": "Актау",
+        "quantity": 0
+      },
+      {
+        "id": 24,
+        "name": "Нур-Султан",
+        "quantity": 0
+      },
+      {
+        "id": 25,
+        "name": "Шымкент (Тассай)",
+        "quantity": 0
+      }
+    ],
+    "image": "https://example.test/images/TEST-BOX-60-LOW.jpg",
+    "url": "https://example.test/catalog/junction_boxes/TEST-BOX-60-LOW/",
+    "offers": [],
+    "properties": {
+      "BRAND_PRIORITY": "1",
+      "CML2_ARTICLE": "TEST-BOX-60-LOW",
+      "NOVINKA": "Нет",
+      "SPETSPREDLOZHENIE": "Нет",
+      "CML2_TRAITS": [
+        "Товары приобретенные",
+        "Товар",
+        "TEST-BOX-60-LOW",
+        "Нет",
+        "Нет",
+        "Коробка распределительная 60x40 мм скрытого монтажа (тестовый LOW)",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      "CML2_TAXES": "16",
+      "KRATNOST_MIN": "1",
+      "ARTIKULPOSTAVSHCHIKA": "TEST-BOX-60-LOW",
+      "KATEGORIYA": "Коробка распределительная",
+      "TIP_USTANOVKI": "Скрытая"
+    }
+  }
+]
