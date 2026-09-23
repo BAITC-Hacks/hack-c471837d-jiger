@@ -1,11 +1,15 @@
 import json
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Iterator
 from pathlib import Path
 from uuid import uuid4
 
 import httpx
 import pytest
+import respx
 
+import fetch_catalog as catalog_loader
+from app import agent
+from app import catalog as product_catalog
 from app.main import app
 
 FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures"
@@ -14,6 +18,57 @@ FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures"
 @pytest.fixture
 def catalog() -> list[dict]:
     return json.loads((FIXTURES_DIR / "catalog_small.json").read_text(encoding="utf-8"))
+
+
+@pytest.fixture
+def no_openai(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Opt-in guard for deterministic tests, including ones without a catalog."""
+    def forbid_openai(*args, **kwargs):
+        pytest.fail("Тесты логики не должны создавать клиент OpenAI.")
+
+    monkeypatch.setattr(agent, "OpenAI", forbid_openai)
+
+
+@pytest.fixture
+def offline_catalog(
+    catalog: list[dict], tmp_path: Path, monkeypatch: pytest.MonkeyPatch, no_openai: None,
+) -> Iterator[None]:
+    """Build an isolated cache through the real loader and keep HTTP mocked until teardown."""
+    cache_path = tmp_path / "data" / "products.json"
+    monkeypatch.setattr(product_catalog, "CATALOG_PATH", cache_path)
+    monkeypatch.setattr(catalog_loader, "CATALOG_PATH", cache_path)
+
+    # catalog_small contains detail responses; preserve the captured list schema.
+    page = json.loads((FIXTURES_DIR / "api_products_page1.json").read_text(encoding="utf-8"))
+    list_fields = tuple(page["items"][0])
+    page["items"] = [
+        {
+            field: (
+                f"{catalog_loader.API_URL}/detail?id={product['id']}"
+                if field == "url_api_detail" else product[field]
+            )
+            for field in list_fields
+        }
+        for product in catalog
+    ]
+    page["page"] = 1
+    page["count"] = len(page["items"])
+    assert page["count"] <= page["per_page"], "Тестовый каталог должен помещаться на одну страницу."
+
+    with respx.mock(assert_all_mocked=True, assert_all_called=True) as router:
+        router.get(catalog_loader.API_URL, params={"page": "1"}).respond(200, json=page)
+        for product in catalog:
+            router.get(
+                f"{catalog_loader.API_URL}/detail", params={"id": str(product["id"])},
+            ).respond(200, json=product)
+
+        with httpx.Client(auth=httpx.BasicAuth("fixture-user", "fixture-password")) as client:
+            products, pages = catalog_loader.fetch_catalog(client, max_pages=1)
+        assert pages == 1 and len(products) == len(catalog)
+        # Verify the loader consumed every route before the test can make requests.
+        router.assert_all_called()
+        catalog_loader.save_catalog(products)
+        yield
 
 
 @pytest.fixture

@@ -1,4 +1,6 @@
 .env
+.env.*
+!.env.example
 venv/
 .venv/
 __pycache__/
@@ -9,3 +11,6 @@ __pycache__/
 .DS_Store
 handoff/
 README.md
+
+# Local test-planning prompts
+/docs/stage-5-test-prompts.md
