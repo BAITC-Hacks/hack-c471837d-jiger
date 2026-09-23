@@ -3,10 +3,227 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Консультант EKT</title>
+    <meta name="theme-color" content="#132a47">
+    <title>Ассистент ekt.kz</title>
+    <style>
+      :root {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: #172b46;
+        background: #edf1f6;
+        color-scheme: light;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        min-height: 100dvh;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background: radial-gradient(ellipse at top left, #dce8f4, transparent 60%), #edf1f6;
+      }
+      button, input { font: inherit; }
+      .chat {
+        width: min(100%, 740px);
+        height: min(780px, calc(100vh - 48px));
+        height: min(780px, calc(100dvh - 48px));
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        background: #fff;
+        border: 1px solid #dce3ec;
+        border-radius: 24px;
+        box-shadow: 0 20px 70px #132a4714;
+      }
+      .header {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 24px;
+        color: #fff;
+        background: #132a47;
+      }
+      .logo {
+        display: grid;
+        place-items: center;
+        flex: 0 0 48px;
+        height: 48px;
+        border-radius: 14px;
+        background: #ffcd45;
+        color: #132a47;
+        font-size: 30px;
+        font-weight: 800;
+      }
+      h1 { margin: 0 0 5px; font-size: 22px; letter-spacing: -.4px; }
+      .subtitle { margin: 0; color: #c7d5e5; font-size: 13px; line-height: 1.5; }
+      .messages {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        padding: 24px;
+      }
+      .message { display: flex; flex-direction: column; align-items: flex-start; margin-bottom: 20px; }
+      .message.user { align-items: flex-end; }
+      .label { margin: 0 4px 6px; font-size: 11px; font-weight: 600; color: #68788c; }
+      .bubble {
+        max-width: 88%;
+        padding: 14px 17px;
+        border-radius: 3px 17px 17px;
+        background: #f0f4f8;
+        font-size: 14px;
+        line-height: 1.65;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+      }
+      .user .bubble { background: #1c4b7c; color: #fff; border-radius: 17px 3px 17px 17px; }
+      .typing { padding: 0 28px 14px; color: #68788c; font-size: 13px; }
+      .typing::before { content: "●"; margin-right: 8px; color: #c59418; animation: pulse 1s ease-in-out infinite alternate; }
+      .composer { padding: 18px 24px; border-top: 1px solid #e6ebf1; }
+      form { display: flex; gap: 10px; }
+      input {
+        flex: 1;
+        min-width: 0;
+        padding: 14px;
+        border: 1px solid #d5deea;
+        border-radius: 12px;
+        outline: none;
+        background: #fbfcfe;
+        font-size: 14px;
+      }
+      input:focus { border-color: #1c4b7c; box-shadow: 0 0 0 3px #1c4b7c14; }
+      input::placeholder { color: #7b8898; }
+      button {
+        padding: 0 18px;
+        border: 0;
+        border-radius: 12px;
+        background: #ffcd45;
+        color: #172b46;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      button:hover:not(:disabled) { background: #ffc321; }
+      button:focus-visible { outline: 3px solid #1c4b7c; outline-offset: 3px; }
+      button:disabled { opacity: .45; cursor: default; }
+      .hint { margin: 10px 0 0; color: #7b8898; font-size: 11px; }
+      @keyframes pulse { to { opacity: .25; } }
+      @media (prefers-reduced-motion: reduce) { .typing::before { animation: none; } }
+      @media (max-width: 520px) {
+        body { padding: 0; }
+        .chat { height: 100vh; height: 100dvh; border: 0; border-radius: 0; }
+        .header { padding: 20px 16px; }
+        h1 { font-size: 20px; }
+        .messages { padding: 20px 16px; }
+        .bubble { max-width: 95%; }
+        .composer { padding: 16px; padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+        input { font-size: 16px; }
+        button { padding: 0 12px; }
+      }
+    </style>
   </head>
   <body>
-    <h1>Консультант EKT</h1>
-    <p>Чат скоро появится.</p>
+    <main class="chat" aria-labelledby="chat-title">
+      <header class="header">
+        <span class="logo" aria-hidden="true">ϟ</span>
+        <div>
+          <h1 id="chat-title">Ассистент ekt.kz</h1>
+          <p class="subtitle">Помогу выбрать электротовары под вашу задачу</p>
+        </div>
+      </header>
+
+      <section id="messages" class="messages" role="log" aria-live="polite" aria-relevant="additions" aria-label="История переписки"></section>
+      <div id="typing" class="typing" role="status" hidden>ассистент печатает...</div>
+
+      <footer class="composer">
+        <form id="chat-form">
+          <input id="message-input" type="text" autocomplete="off" aria-label="Сообщение ассистенту" placeholder="Какой товар вы ищете?" required>
+          <button id="send-button" type="submit" disabled>Отправить</button>
+        </form>
+        <p class="hint">Можно писать на русском или қазақша · Enter — отправить</p>
+      </footer>
+    </main>
+
+    <script>
+      const history = [];
+      const messages = document.getElementById("messages");
+      const form = document.getElementById("chat-form");
+      const input = document.getElementById("message-input");
+      const sendButton = document.getElementById("send-button");
+      const typing = document.getElementById("typing");
+      let busy = false;
+
+      function addMessage(role, text) {
+        const row = document.createElement("div");
+        row.className = `message ${role}`;
+        const label = document.createElement("div");
+        label.className = "label";
+        label.textContent = role === "user" ? "Вы" : "Ассистент ekt.kz";
+        const bubble = document.createElement("div");
+        bubble.className = "bubble";
+        bubble.textContent = text;
+        row.append(label, bubble);
+        messages.append(row);
+        messages.scrollTop = messages.scrollHeight;
+      }
+
+      function updateButton() {
+        sendButton.disabled = busy || !input.value.trim();
+      }
+
+      input.addEventListener("input", updateButton);
+      input.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter") return;
+        event.preventDefault();
+        if (!event.isComposing) form.requestSubmit();
+      });
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const message = input.value.trim();
+        if (busy || !message) return;
+
+        const previousHistory = history.slice(-10);
+        addMessage("user", message);
+        input.value = "";
+        busy = true;
+        typing.hidden = false;
+        messages.setAttribute("aria-busy", "true");
+        updateButton();
+        messages.scrollTop = messages.scrollHeight;
+
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 90000);
+        let reply;
+        try {
+          const response = await fetch("/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message, history: previousHistory }),
+            signal: controller.signal,
+          });
+          const data = await response.json();
+          if (typeof data.reply !== "string" || !data.reply.trim()) {
+            throw new Error("Некорректный ответ сервера");
+          }
+          reply = data.reply;
+          history.push({ role: "user", content: message }, { role: "assistant", content: reply });
+        } catch (error) {
+          reply = error.name === "AbortError"
+            ? "Ответ занимает слишком много времени. Пожалуйста, попробуйте ещё раз."
+            : "Не удалось связаться с ассистентом. Проверьте соединение и попробуйте ещё раз.";
+        } finally {
+          clearTimeout(timeout);
+          busy = false;
+          typing.hidden = true;
+          messages.setAttribute("aria-busy", "false");
+          addMessage("assistant", reply);
+          updateButton();
+          input.focus();
+        }
+      });
+
+      addMessage("assistant", "Здравствуйте! Я ассистент ekt.kz. Помогу подобрать электротовары и разобраться в характеристиках. Расскажите, что вы ищете.");
+    </script>
   </body>
 </html>
