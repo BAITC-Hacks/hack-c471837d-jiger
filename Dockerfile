@@ -10,11 +10,14 @@ COPY requirements.txt ./requirements.txt
 RUN python -m pip install --no-cache-dir -r requirements.txt
 
 RUN groupadd --gid 10001 app \
-    && useradd --uid 10001 --gid app --create-home --shell /usr/sbin/nologin app
+    && useradd --uid 10001 --gid app --create-home --shell /usr/sbin/nologin app \
+    && mkdir -p /app/data \
+    && chown app:app /app/data
 
 COPY --chown=app:app app/ ./app/
 COPY --chown=app:app static/chat.html ./static/chat.html
-COPY --chown=app:app data/products.json ./data/products.json
+
+# Mount the catalog cache at /app/data/products.json at runtime.
 
 # Supply credentials through environment variables when starting the container.
 USER 10001:10001

@@ -1,18 +1,28 @@
-# Include only the files required by the application.
-**
-!requirements.txt
-!app/
-!app/**
-!static/
-!static/chat.html
-!data/
-!data/products.json
-
-# Exclude credentials and generated Python files even inside included folders.
+# Credentials
+.env
+.env.*
 **/.env
 **/.env.*
 **/*.pem
 **/*.key
-**/__pycache__/
-**/*.pyc
-**/*.pyo
+
+# Git and local Python environments
+.git/
+**/.git/
+venv/
+.venv/
+**/venv/
+**/.venv/
+**/*pycache*/
+**/*.py[cod]
+.pytest_cache/
+
+# Tests, documentation and spreadsheets
+tests/
+docs/
+*.xlsx
+**/*.xlsx
+
+# Generated catalog cache and temporary catalog downloads
+data/products.json
+data/.products-*.tmp
