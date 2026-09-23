@@ -3,7 +3,20 @@ import re
 from pathlib import Path
 
 CATALOG_PATH = Path(__file__).resolve().parent.parent / "data" / "products.json"
-PRODUCT_FIELDS = ("id", "name", "price", "category", "description", "characteristics")
+PRODUCT_FIELDS = (
+    "id", "name", "article", "price", "category", "image", "url", "url_api_detail",
+    "description", "quantity", "properties", "characteristics",
+)
+
+
+def product_fields(product: dict) -> dict:
+    detail = product.get("detail", {})
+    # Поля списка остаются исходными; отсутствующие берём из полной карточки.
+    return {
+        field: product[field] if field in product else detail[field]
+        for field in PRODUCT_FIELDS
+        if field in product or field in detail
+    }
 
 
 def load_catalog() -> list[dict]:
@@ -12,7 +25,8 @@ def load_catalog() -> list[dict]:
             products = json.load(file)
     except FileNotFoundError:
         raise RuntimeError(
-            "Каталог data/products.json не найден. Запустите uv run python fetch_catalog.py."
+            "Каталог data/products.json не найден: запустите python fetch_catalog.py "
+            "(с uv: uv run python fetch_catalog.py)."
         ) from None
     except (json.JSONDecodeError, UnicodeDecodeError):
         raise RuntimeError(
@@ -36,22 +50,38 @@ def search_products(query: str, max_results: int = 5) -> list[dict]:
     if type(max_results) is not int or max_results < 1:
         raise ValueError("Количество результатов должно быть целым числом больше нуля.")
 
-    words = set(re.findall(r"\w+", query.casefold()))
+    folded_query = query.casefold().strip()
+    words = set(re.findall(r"\w+", folded_query))
     if not words:
         return []
 
     matches = []
     for product in load_catalog():
+        sources = (product, product.get("detail", {}))
         searchable = " ".join(
-            str(product.get(field) or "")
-            for field in ("name", "category", "description", "characteristics")
+            str(source.get(field) or "")
+            for source in sources
+            for field in ("article", "name", "category", "description", "characteristics", "properties")
         ).casefold()
+        articles = []
+        for source in sources:
+            articles.append(str(source.get("article") or "").casefold().strip())
+            properties = source.get("properties")
+            if isinstance(properties, dict):
+                articles.extend(
+                    str(properties.get(key) or "").casefold().strip()
+                    for key in ("CML2_ARTICLE", "ARTIKULPOSTAVSHCHIKA")
+                )
+        exact_article = any(
+            article and re.search(r"(?<!\w)" + re.escape(article) + r"(?!\w)", folded_query)
+            for article in articles
+        )
         score = sum(word in searchable for word in words)
-        if score:
-            matches.append((score, product))
+        if exact_article or score:
+            matches.append((exact_article, score, product))
 
-    matches.sort(key=lambda match: match[0], reverse=True)
+    matches.sort(key=lambda match: (match[0], match[1]), reverse=True)
     return [
-        {field: product[field] for field in PRODUCT_FIELDS if field in product}
-        for _, product in matches[:max_results]
+        product_fields(product)
+        for _, _, product in matches[:max_results]
     ]

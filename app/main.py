@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, Request
@@ -6,9 +7,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, Field
 
-from app.agent import run_agent
+from app.agent import ERROR_REPLY, log_exception, run_agent
+from app.catalog import load_catalog
 
-app = FastAPI(title="EKT — ИИ-консультант")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    load_catalog()
+    yield
+
+
+app = FastAPI(title="EKT — ИИ-консультант", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -17,7 +26,6 @@ app.add_middleware(
 )
 
 CHAT_PATH = Path(__file__).resolve().parent.parent / "static" / "chat.html"
-ERROR_REPLY = "Извините, произошла ошибка. Попробуйте ещё раз."
 
 
 class ChatRequest(BaseModel):
@@ -40,12 +48,16 @@ def index() -> FileResponse:
 
 @app.post("/chat")
 def chat(payload: ChatRequest) -> dict[str, str]:
+    if not payload.message.strip():
+        return {"reply": "Пожалуйста, сформулируйте вопрос: какой товар вы ищете?"}
+    if len(payload.message) > 1000:
+        return {"reply": "Пожалуйста, сократите сообщение до 1000 символов, чтобы я мог помочь."}
     # FastAPI выполняет синхронный агент в пуле потоков, не блокируя веб-сервер.
     try:
         reply = run_agent(payload.message, payload.history)
         if not isinstance(reply, str) or not reply.strip():
             raise ValueError("Агент вернул пустой ответ.")
         return {"reply": reply}
-    except Exception as error:
-        print(f"Ошибка /chat: {type(error).__name__}", flush=True)
+    except Exception:
+        log_exception("Необработанная ошибка /chat")
         return {"reply": ERROR_REPLY}

@@ -1,6 +1,8 @@
 import argparse
 import json
+import logging
 import os
+import traceback
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -8,23 +10,30 @@ from openai import (
     APIConnectionError,
     APIError,
     APIStatusError,
-    APITimeoutError,
     AuthenticationError,
     OpenAI,
     RateLimitError,
 )
 
-from app import catalog
+from app import catalog, redact_secrets
 from app.prompts import SYSTEM_PROMPT
 
 MAX_TOOL_ROUNDS = 4
+ERROR_REPLY = "Извините, произошла ошибка. Попробуйте ещё раз."
+OVERLOAD_REPLY = "Сервис перегружен, попробуйте через минуту"
+
+# Отладочные логи SDK/HTTP могут содержать тело запроса; используем свои логи.
+for logger_name in ("openai", "httpx", "httpcore"):
+    logging.getLogger(logger_name).setLevel(logging.WARNING)
+
 TOOLS = [
     {
         "type": "function",
         "function": {
             "name": "search_products",
             "description": (
-                "Поиск реальных товаров в загруженном каталоге EKT. "
+                "Поиск реальных товаров по артикулу, названию и характеристикам в каталоге EKT. "
+                "Артикул передавай целиком, сохраняя нули, дефисы и подчёркивания. "
                 "Передавай короткий запрос на русском; при отсутствии совпадений "
                 "попробуй синоним или более общий запрос."
             ),
@@ -44,7 +53,11 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "get_product",
-            "description": "Карточка товара из кэша по id из поиска или вопроса покупателя.",
+            "description": (
+                "Полные данные товара из кэша по id. Поле detail содержит исходный ответ "
+                "карточки: описание, properties, quantity, stores и offers. "
+                "Также доступны article, image, url и url_api_detail."
+            ),
             "strict": True,
             "parameters": {
                 "type": "object",
@@ -70,23 +83,20 @@ def get_product(product_id: int) -> dict:
         raise ValueError("product_id должен быть положительным целым числом.")
     for product in catalog.load_catalog():
         if str(product.get("id")) == str(product_id):
-            return {
-                field: product[field]
-                for field in catalog.PRODUCT_FIELDS
-                if field in product
-            }
+            return product
     return {"error": f"Товар с id {product_id} не найден в загруженном каталоге."}
 
 
 def log(label: str, value: str) -> None:
-    for key in ("OPENAI_API_KEY", "EKT_API_USER", "EKT_API_PASSWORD"):
-        secret = os.environ.get(key)
-        if secret:
-            value = value.replace(secret, "[скрыто]")
-    print(f"{label}: {value}", flush=True)
+    print(redact_secrets(f"{label}: {value}"), flush=True)
+
+
+def log_exception(label: str) -> None:
+    log(label, traceback.format_exc())
 
 
 def finish(answer: str) -> str:
+    answer = redact_secrets(answer)
     log("Ответ", answer)
     return answer
 
@@ -105,10 +115,10 @@ def execute_tool(name: str, arguments: str) -> object:
     except json.JSONDecodeError:
         return {"error": "Некорректный JSON аргументов. Исправь аргументы инструмента."}
     except (ValueError, RuntimeError) as error:
-        return {"error": str(error)}
+        return {"error": redact_secrets(str(error))}
 
 
-def run_agent(message: str, history: list[dict]) -> str:
+def _run_agent(message: str, history: list[dict]) -> str:
     try:
         load_dotenv(Path(__file__).resolve().parent.parent / ".env")
     except (OSError, UnicodeError):
@@ -172,19 +182,26 @@ def run_agent(message: str, history: list[dict]) -> str:
                         "content": json.dumps(result, ensure_ascii=False),
                     })
     except AuthenticationError:
+        log_exception("Ошибка авторизации OpenAI")
         return finish("OpenAI отклонил ключ API. Проверьте OPENAI_API_KEY в .env.")
-    except RateLimitError:
-        return finish("Достигнут лимит OpenAI. Повторите позже или проверьте квоту API.")
-    except APITimeoutError:
-        return finish("OpenAI не ответил вовремя. Пожалуйста, повторите запрос.")
-    except APIConnectionError:
-        return finish("Не удалось связаться с OpenAI. Проверьте соединение и повторите запрос.")
+    except (RateLimitError, APIConnectionError):
+        # APITimeoutError также является APIConnectionError; SDK уже сделал ретрай.
+        log_exception("OpenAI недоступен после повторной попытки")
+        return finish(OVERLOAD_REPLY)
     except APIStatusError as error:
-        return finish(f"OpenAI вернул ошибку HTTP {error.status_code}. Проверьте MODEL или повторите позже.")
+        log_exception("Ошибка HTTP OpenAI")
+        return finish(OVERLOAD_REPLY if error.status_code >= 500 else ERROR_REPLY)
     except APIError:
-        return finish("Не удалось обработать ответ OpenAI. Пожалуйста, повторите запрос.")
-    except RuntimeError as error:
-        return finish(str(error))
+        log_exception("Ошибка ответа OpenAI")
+        return finish(ERROR_REPLY)
+
+
+def run_agent(message: str, history: list[dict]) -> str:
+    try:
+        return _run_agent(message, history)
+    except Exception:
+        log_exception("Необработанная ошибка run_agent")
+        return finish(ERROR_REPLY)
 
 
 if __name__ == "__main__":

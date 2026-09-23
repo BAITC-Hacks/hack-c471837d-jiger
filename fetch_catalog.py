@@ -1,16 +1,16 @@
 import argparse
-import html
 import json
 import os
-import re
 import sys
 import tempfile
 import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import httpx
 from dotenv import load_dotenv
 
+from app import redact_secrets
 from app.catalog import CATALOG_PATH
 
 API_URL = "https://ekt.kz/api/products"
@@ -18,18 +18,14 @@ MAX_RETRIES = 3
 
 
 def unexpected_response(payload: object) -> RuntimeError:
-    sample = json.dumps(payload, ensure_ascii=False, indent=2)
-    for key in ("EKT_API_USER", "EKT_API_PASSWORD", "OPENAI_API_KEY"):
-        secret = os.environ.get(key)
-        if secret:
-            sample = sample.replace(secret, "[скрыто]")
+    sample = redact_secrets(json.dumps(payload, ensure_ascii=False, indent=2))
     return RuntimeError(
         "Неожиданная структура ответа API. Уточните формат полей перед загрузкой.\n"
         f"Пример сырого ответа (до 2000 символов):\n{sample[:2000]}"
     )
 
 
-def request_json(client: httpx.Client, url: str, params: dict) -> object:
+def request_json(client: httpx.Client, url: str, params: dict | None = None) -> object:
     for attempt in range(MAX_RETRIES + 1):
         try:
             response = client.get(url, params=params)
@@ -71,56 +67,52 @@ def normalize_product(item: dict, detail: object) -> dict:
         detail["price"] is not None and type(detail["price"]) not in (int, float, str)
     ):
         raise unexpected_response(detail)
-    description = detail.get("description") or ""
-    properties = detail.get("properties") or {}
-    if not isinstance(description, str) or not isinstance(properties, dict):
-        raise unexpected_response(detail)
+    if "detail" in item:
+        raise unexpected_response(item)
+    # Ответы могут различаться даже в поле image: сохраняем оба без изменений.
+    return {**item, "detail": detail}
 
-    product = {
-        "id": detail["id"],
-        "name": detail["name"].strip(),
-        "price": detail["price"],
-        "category": detail.get("category", item.get("category")),
-    }
-    if description:
-        plain = html.unescape(re.sub(r"<[^>]+>", " ", description))
-        product["description"] = " ".join(plain.split())[:2000]
-    characteristics = {
-        key: value
-        for key, value in properties.items()
-        if not key.startswith(("CML2_", "BRAND_"))
-        and key not in ("ARTIKULPOSTAVSHCHIKA", "NOVINKA", "SPETSPREDLOZHENIE")
-        and value not in (None, "", [], {})
-    }
-    if characteristics:
-        product["characteristics"] = characteristics
-    return product
+
+def fetch_product(client: httpx.Client, item: dict) -> dict:
+    link = item.get("url_api_detail")
+    if not isinstance(link, str) or not link:
+        raise unexpected_response(item)
+    try:
+        url = httpx.URL(link)
+    except httpx.InvalidURL:
+        raise unexpected_response(item) from None
+    # Basic Auth разрешён только для исходного сервера EKT.
+    if url.scheme != "https" or url.host != "ekt.kz" or url.port not in (None, 443):
+        raise unexpected_response(item)
+    detail = request_json(client, link)
+    return normalize_product(item, detail)
 
 
 def fetch_catalog(client: httpx.Client, max_pages: int) -> tuple[list[dict], int]:
     products = []
     seen_ids = set()
     pages = 0
-    for page in range(1, max_pages + 1):
-        payload = request_json(client, API_URL, {"page": page})
-        if not isinstance(payload, dict) or not isinstance(payload.get("items"), list):
-            raise unexpected_response(payload)
-        items = payload["items"]
-        if not items:
-            print(f"Страница {page} пустая; загрузка завершена.")
-            break
-        for item in items:
-            if not isinstance(item, dict) or type(item.get("id")) not in (int, str):
-                raise unexpected_response(item)
-            if item["id"] in seen_ids:
-                continue
-            detail = request_json(client, f"{API_URL}/detail", {"id": item["id"]})
-            products.append(normalize_product(item, detail))
-            seen_ids.add(item["id"])
-        pages += 1
-        print(f"Страница {page}: {len(items)} позиций; собрано {len(products)} товаров.", flush=True)
-    else:
-        print(f"Достигнут лимит MAX_PAGES={max_pages}; каталог может быть неполным.")
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        for page in range(1, max_pages + 1):
+            payload = request_json(client, API_URL, {"page": page})
+            if not isinstance(payload, dict) or not isinstance(payload.get("items"), list):
+                raise unexpected_response(payload)
+            items = payload["items"]
+            if not items:
+                print(f"Страница {page} пустая; загрузка завершена.")
+                break
+            pending = []
+            for item in items:
+                if not isinstance(item, dict) or type(item.get("id")) not in (int, str):
+                    raise unexpected_response(item)
+                if item["id"] not in seen_ids:
+                    pending.append(item)
+                    seen_ids.add(item["id"])
+            products.extend(pool.map(lambda item: fetch_product(client, item), pending))
+            pages += 1
+            print(f"Страница {page}: {len(items)} позиций; собрано {len(products)} товаров.", flush=True)
+        else:
+            print(f"Достигнут лимит MAX_PAGES={max_pages}; каталог может быть неполным.")
     return products, pages
 
 
@@ -167,7 +159,7 @@ def main() -> int:
             raise RuntimeError("API вернул пустой каталог; новый кэш не записан.")
         save_catalog(products)
     except RuntimeError as error:
-        print(f"Ошибка: {error}", file=sys.stderr)
+        print(redact_secrets(f"Ошибка: {error}"), file=sys.stderr)
     except (OSError, UnicodeError):
         print("Не удалось прочитать .env или записать каталог. Проверьте права доступа и UTF-8.", file=sys.stderr)
     except KeyboardInterrupt:
