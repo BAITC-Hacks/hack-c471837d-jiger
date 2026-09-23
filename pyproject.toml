@@ -13,3 +13,11 @@ dependencies = [
 
 [tool.uv]
 package = false
+
+[tool.pytest.ini_options]
+markers = [
+    "live: tests that call live external services",
+    "llm: tests that call language models",
+]
+addopts = '-m "not live and not llm"'
+asyncio_mode = "auto"
