@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#132a47">
     <title>Ассистент ekt.kz</title>
+    <link rel="icon" href="data:,">
     <style>
       :root {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -73,10 +74,74 @@
         background: #f0f4f8;
         font-size: 14px;
         line-height: 1.65;
-        white-space: pre-wrap;
         overflow-wrap: anywhere;
       }
-      .user .bubble { background: #1c4b7c; color: #fff; border-radius: 17px 3px 17px 17px; }
+      .user .bubble {
+        background: #1c4b7c;
+        color: #fff;
+        border-radius: 17px 3px 17px 17px;
+        white-space: pre-wrap;
+      }
+      .assistant .bubble:has(.cards) { max-width: 100%; width: 100%; }
+
+      /* Форматирование ответа ассистента */
+      .bubble p { margin: 0 0 8px; }
+      .bubble ol, .bubble ul { margin: 2px 0 8px; padding-left: 22px; }
+      .bubble li { margin: 3px 0; }
+      .bubble li::marker { color: #68788c; font-weight: 600; }
+      .bubble > :last-child { margin-bottom: 0; }
+      .bubble a { color: #1c4b7c; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+      .bubble code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 12.5px;
+        padding: 1px 5px;
+        border-radius: 5px;
+        background: #e2e9f1;
+      }
+
+      /* Карточки товаров */
+      .bubble .cards { list-style: none; margin: 6px 0 8px; padding: 0; display: grid; gap: 8px; }
+      .bubble .cards > li { margin: 0; }
+      .product {
+        display: flex;
+        gap: 12px;
+        padding: 10px;
+        background: #fff;
+        border: 1px solid #dfe6ee;
+        border-radius: 14px;
+        box-shadow: 0 2px 8px #132a470a;
+      }
+      .bubble .thumb {
+        display: grid;
+        place-items: center;
+        flex: 0 0 64px;
+        width: 64px;
+        height: 64px;
+        overflow: hidden;
+        border: 1px solid #e6ebf1;
+        border-radius: 10px;
+        background: #f7f9fc;
+        text-decoration: none;
+      }
+      .thumb img { display: block; width: 100%; height: 100%; object-fit: contain; }
+      .thumb.empty { color: #d8b243; font-size: 26px; font-weight: 800; }
+      .product-body { flex: 1; min-width: 0; }
+      .bubble .product-name {
+        display: block;
+        color: #132a47;
+        font-weight: 600;
+        line-height: 1.4;
+        text-decoration: none;
+      }
+      .bubble a.product-name:hover { text-decoration: underline; }
+      .product-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin-top: 4px; font-size: 13px; }
+      .price { font-weight: 700; font-size: 14px; color: #172b46; }
+      .stock { padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+      .stock.in { background: #e3f5e9; color: #1c6b3a; }
+      .stock.out { background: #f6e4e4; color: #9b2c2c; }
+      .article { color: #68788c; }
+      .product-note { margin-top: 5px; color: #3d4c60; font-size: 13.5px; line-height: 1.5; }
+
       .typing { padding: 0 28px 14px; color: #68788c; font-size: 13px; }
       .typing::before { content: "●"; margin-right: 8px; color: #c59418; animation: pulse 1s ease-in-out infinite alternate; }
       .composer { padding: 18px 24px; border-top: 1px solid #e6ebf1; }
@@ -116,6 +181,8 @@
         h1 { font-size: 20px; }
         .messages { padding: 20px 16px; }
         .bubble { max-width: 95%; }
+        .bubble .thumb { flex-basis: 56px; width: 56px; height: 56px; }
+        .product { gap: 10px; }
         .composer { padding: 16px; padding-bottom: max(16px, env(safe-area-inset-bottom)); }
         input { font-size: 16px; }
         button { padding: 0 12px; }
@@ -146,6 +213,8 @@
 
     <script>
       const history = [];
+      // id товаров, показанных в чате: сервер даёт модели их данные для уточняющих вопросов.
+      const shownProductIds = [];
       const messages = document.getElementById("messages");
       const form = document.getElementById("chat-form");
       const input = document.getElementById("message-input");
@@ -153,7 +222,248 @@
       const typing = document.getElementById("typing");
       let busy = false;
 
-      function addMessage(role, text) {
+      // ---------- Безопасный рендер Markdown-ответа ----------
+      const LINK_RE = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
+      // Картинки Markdown убираем: карточка товара показывает изображение сама.
+      const IMAGE_RE = /!\[[^\]]*\]\([^\s)]*\)/g;
+      const BARE_URL_RE = /(^|[\s(«"'])(https?:\/\/[^\s<>()«»"']+?)([.,;:!?)»"']*)(?=\s|$)/g;
+      const LIST_ITEM_RE = /^(?:(\d+)[.)]|[-*•])\s+(.+)$/;
+      const PRICE_RE = /^(?:\d[\d\s.,]*\s*(?:тенге|теңге|тг\.?|₸|kzt)|цена не указана)\.?/i;
+      const SEPARATOR_RE = /^[\s—–\-:;,.]+/;
+      const numberFormat = new Intl.NumberFormat("ru-RU");
+
+      function escapeHtml(text) {
+        return String(text).replace(/[&<>"']/g, (char) => (
+          { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]
+        ));
+      }
+
+      function escapeRegExp(text) {
+        return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      }
+
+      function safeUrl(url) {
+        try {
+          const parsed = new URL(String(url));
+          return parsed.protocol === "http:" || parsed.protocol === "https:" ? parsed.href : null;
+        } catch {
+          return null;
+        }
+      }
+
+      function normalizeUrl(url) {
+        return String(url || "").trim().replace(/\/+$/, "").toLowerCase();
+      }
+
+      function formatText(raw) {
+        return escapeHtml(raw)
+          .replace(/`([^`]+)`/g, "<code>$1</code>")
+          .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+      }
+
+      function anchor(href, labelHtml) {
+        return `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${labelHtml}</a>`;
+      }
+
+      // Ссылки заменяются на плейсхолдеры, чтобы форматирование не ломало href.
+      function inline(raw) {
+        const links = [];
+        const stash = (html) => `\u0000${links.push(html) - 1}\u0000`;
+        let text = String(raw).replace(IMAGE_RE, "").replace(LINK_RE, (match, label, url) => {
+          const href = safeUrl(url);
+          return href ? stash(anchor(href, formatText(label))) : match;
+        });
+        text = text.replace(BARE_URL_RE, (match, prefix, url, tail) => {
+          const href = safeUrl(url);
+          return href ? prefix + stash(anchor(href, escapeHtml(url))) + tail : match;
+        });
+        return formatText(text)
+          .replace(/\u0000(\d+)\u0000/g, (match, index) => links[index])
+          .replace(/\n/g, "<br>");
+      }
+
+      // ---------- Карточки товаров ----------
+      function findProduct(raw, products) {
+        for (const match of raw.matchAll(LINK_RE)) {
+          const product = products.find((item) => item.url && normalizeUrl(item.url) === normalizeUrl(match[2]));
+          if (product) return { product, matched: match[0] };
+        }
+        const folded = raw.toLowerCase();
+        for (const product of products) {
+          const needle = normalizeUrl(product.url);
+          const index = needle ? folded.indexOf(needle) : -1;
+          if (index !== -1) {
+            let end = index + needle.length;
+            if (raw[end] === "/") end += 1;
+            return { product, matched: raw.slice(index, end) };
+          }
+          if (product.name && raw.includes(product.name)) {
+            const wrapped = raw.match(new RegExp(
+              "\\[?(?:\\*\\*|`)?" + escapeRegExp(product.name) + "(?:\\*\\*|`)?\\]?"
+            ));
+            return { product, matched: wrapped ? wrapped[0] : product.name };
+          }
+        }
+        return null;
+      }
+
+      function productNote(raw, matched) {
+        let note = raw.replace(matched, "").replace(/^\s*\[\s*\]/, "").replace(SEPARATOR_RE, "");
+        note = note.replace(PRICE_RE, "").replace(SEPARATOR_RE, "");
+        note = note.replace(/\s*[—–-]\s*[—–-]\s*/g, " — ").trim();
+        return note.length > 1 ? note.charAt(0).toUpperCase() + note.slice(1) : note;
+      }
+
+      function formatPrice(price) {
+        const number = typeof price === "number"
+          ? price
+          : Number(String(price ?? "").replace(/\s/g, "").replace(",", "."));
+        if (!Number.isFinite(number) || number <= 0) return "цена не указана";
+        return `${numberFormat.format(number)} ₸`;
+      }
+
+      function stockBadge(quantity) {
+        const number = Number(quantity);
+        if (quantity === null || quantity === undefined || !Number.isFinite(number)) return null;
+        const badge = document.createElement("span");
+        badge.className = `stock ${number > 0 ? "in" : "out"}`;
+        badge.textContent = number > 0 ? `В наличии · ${numberFormat.format(number)} шт.` : "Нет в наличии";
+        return badge;
+      }
+
+      function externalLink(element, href) {
+        element.href = href;
+        element.target = "_blank";
+        element.rel = "noopener noreferrer";
+      }
+
+      function productCard(product, note) {
+        const item = document.createElement("li");
+        item.className = "product";
+        const href = safeUrl(product.url);
+
+        const thumb = document.createElement(href ? "a" : "div");
+        thumb.className = "thumb";
+        if (href) {
+          externalLink(thumb, href);
+          thumb.tabIndex = -1;
+          thumb.setAttribute("aria-hidden", "true");
+        }
+        const showPlaceholder = () => {
+          thumb.replaceChildren();
+          thumb.classList.add("empty");
+          thumb.textContent = "ϟ";
+        };
+        const image = safeUrl(product.image);
+        if (image) {
+          const img = document.createElement("img");
+          img.src = image;
+          img.alt = "";
+          img.loading = "lazy";
+          img.referrerPolicy = "no-referrer";
+          img.addEventListener("error", showPlaceholder);
+          thumb.append(img);
+        } else {
+          showPlaceholder();
+        }
+
+        const body = document.createElement("div");
+        body.className = "product-body";
+        const name = document.createElement(href ? "a" : "span");
+        name.className = "product-name";
+        name.textContent = product.name || product.article || "Товар";
+        if (href) externalLink(name, href);
+
+        const meta = document.createElement("div");
+        meta.className = "product-meta";
+        const price = document.createElement("span");
+        price.className = "price";
+        price.textContent = formatPrice(product.price);
+        meta.append(price);
+        const badge = stockBadge(product.quantity);
+        if (badge) meta.append(badge);
+        if (product.article && !String(product.name || "").includes(product.article)) {
+          const article = document.createElement("span");
+          article.className = "article";
+          article.textContent = `арт. ${product.article}`;
+          meta.append(article);
+        }
+
+        body.append(name, meta);
+        if (note) {
+          const text = document.createElement("div");
+          text.className = "product-note";
+          text.innerHTML = inline(note);
+          body.append(text);
+        }
+        item.append(thumb, body);
+        return item;
+      }
+
+      // ---------- Блочный рендер: абзацы и списки ----------
+      // Строки с отступом под пунктом списка считаются продолжением этого пункта.
+      function parseBlocks(text) {
+        const blocks = [];
+        let current = null;
+        for (const rawLine of String(text).replace(/\r\n?/g, "\n").split("\n")) {
+          const line = rawLine.replace(IMAGE_RE, "").trim();
+          if (!line) {
+            if (current && current.type === "para") current = null;
+            continue;
+          }
+          const nested = current && current.type === "list" && current.items.length && /^\s/.test(rawLine);
+          const item = nested ? null : line.match(LIST_ITEM_RE);
+          if (item) {
+            const tag = item[1] ? "ol" : "ul";
+            if (!current || current.type !== "list" || current.tag !== tag) {
+              current = { type: "list", tag, items: [] };
+              blocks.push(current);
+            }
+            current.items.push({ number: item[1] ? Number(item[1]) : null, text: item[2] });
+            continue;
+          }
+          if (nested) {
+            current.items[current.items.length - 1].text += "\n" + line.replace(/^[-*•]\s+/, "• ");
+            continue;
+          }
+          if (!current || current.type !== "para") {
+            current = { type: "para", lines: [] };
+            blocks.push(current);
+          }
+          current.lines.push(line.replace(/^#{1,6}\s+/, ""));
+        }
+        return blocks;
+      }
+
+      function renderReply(text, products) {
+        const fragment = document.createDocumentFragment();
+        for (const block of parseBlocks(text)) {
+          if (block.type === "para") {
+            const element = document.createElement("p");
+            element.innerHTML = block.lines.map(inline).join("<br>");
+            fragment.append(element);
+            continue;
+          }
+          const list = document.createElement(block.tag);
+          for (const entry of block.items) {
+            const found = findProduct(entry.text, products);
+            let element;
+            if (found) {
+              element = productCard(found.product, productNote(entry.text, found.matched));
+              list.classList.add("cards");
+            } else {
+              element = document.createElement("li");
+              element.innerHTML = inline(entry.text);
+            }
+            if (entry.number !== null) element.value = entry.number;
+            list.append(element);
+          }
+          fragment.append(list);
+        }
+        return fragment;
+      }
+
+      function addMessage(role, text, products = []) {
         const row = document.createElement("div");
         row.className = `message ${role}`;
         const label = document.createElement("div");
@@ -161,7 +471,11 @@
         label.textContent = role === "user" ? "Вы" : "Ассистент ekt.kz";
         const bubble = document.createElement("div");
         bubble.className = "bubble";
-        bubble.textContent = text;
+        if (role === "assistant") {
+          bubble.append(renderReply(text, Array.isArray(products) ? products : []));
+        } else {
+          bubble.textContent = text;
+        }
         row.append(label, bubble);
         messages.append(row);
         messages.scrollTop = messages.scrollHeight;
@@ -195,11 +509,12 @@
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 90000);
         let reply;
+        let products = [];
         try {
           const response = await fetch("/chat", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ message, history: previousHistory }),
+            body: JSON.stringify({ message, history: previousHistory, product_ids: shownProductIds.slice(-10) }),
             signal: controller.signal,
           });
           const data = await response.json();
@@ -207,6 +522,15 @@
             throw new Error("Некорректный ответ сервера");
           }
           reply = data.reply;
+          products = Array.isArray(data.products) ? data.products : [];
+          for (const product of products) {
+            const id = Number(product.id);
+            if (!Number.isInteger(id) || id <= 0) continue;
+            const index = shownProductIds.indexOf(id);
+            if (index !== -1) shownProductIds.splice(index, 1);
+            shownProductIds.push(id);
+          }
+          if (shownProductIds.length > 20) shownProductIds.splice(0, shownProductIds.length - 20);
           history.push({ role: "user", content: message }, { role: "assistant", content: reply });
         } catch (error) {
           reply = error.name === "AbortError"
@@ -217,7 +541,7 @@
           busy = false;
           typing.hidden = true;
           messages.setAttribute("aria-busy", "false");
-          addMessage("assistant", reply);
+          addMessage("assistant", reply, products);
           updateButton();
           input.focus();
         }

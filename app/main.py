@@ -31,13 +31,18 @@ CHAT_PATH = Path(__file__).resolve().parent.parent / "static" / "chat.html"
 class ChatRequest(BaseModel):
     message: str
     history: list[dict] = Field(default_factory=list)
+    # id товаров, уже показанных в чате: контекст для уточняющих вопросов.
+    product_ids: list[int] = Field(default_factory=list, max_length=20)
 
 
 @app.exception_handler(RequestValidationError)
 async def invalid_request(request: Request, error: RequestValidationError) -> JSONResponse:
     return JSONResponse(
         status_code=422,
-        content={"reply": "Некорректный запрос: message должен быть текстом, history — списком реплик."},
+        content={
+            "reply": "Некорректный запрос: message должен быть текстом, history — списком реплик.",
+            "products": [],
+        },
     )
 
 
@@ -47,17 +52,19 @@ def index() -> FileResponse:
 
 
 @app.post("/chat")
-def chat(payload: ChatRequest) -> dict[str, str]:
+def chat(payload: ChatRequest) -> dict:
     if not payload.message.strip():
-        return {"reply": "Пожалуйста, сформулируйте вопрос: какой товар вы ищете?"}
+        return {"reply": "Пожалуйста, сформулируйте вопрос: какой товар вы ищете?", "products": []}
     if len(payload.message) > 1000:
-        return {"reply": "Пожалуйста, сократите сообщение до 1000 символов, чтобы я мог помочь."}
+        return {"reply": "Пожалуйста, сократите сообщение до 1000 символов, чтобы я мог помочь.", "products": []}
     # FastAPI выполняет синхронный агент в пуле потоков, не блокируя веб-сервер.
     try:
-        reply = run_agent(payload.message, payload.history)
+        result = run_agent(payload.message, payload.history, payload.product_ids)
+        reply = result.get("reply") if isinstance(result, dict) else None
         if not isinstance(reply, str) or not reply.strip():
             raise ValueError("Агент вернул пустой ответ.")
-        return {"reply": reply}
+        products = result.get("products")
+        return {"reply": reply, "products": products if isinstance(products, list) else []}
     except Exception:
         log_exception("Необработанная ошибка /chat")
-        return {"reply": ERROR_REPLY}
+        return {"reply": ERROR_REPLY, "products": []}
