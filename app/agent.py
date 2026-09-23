@@ -41,17 +41,21 @@ TOOLS = [
         "function": {
             "name": "find_analogs",
             "description": (
-                "Подобрать до пяти доступных альтернатив по точному артикулу товара. "
-                "Возвращает товары той же категории с положительным остатком и reason. "
-                "При неизвестном артикуле или категории возвращает пустой список. "
-                "Результаты упорядочены по сходству описаний; совместимость нужно "
-                "проверять по характеристикам."
+                "Подобрать аналоги по id найденного товара, в том числе при quantity=0. "
+                "Только товары близкой группы с положительным остатком. Возвращает "
+                "matched (совпавшие свойства и токены названия) и differs (отличия, "
+                "неизвестные характеристики и бренд исходного товара/аналога). "
+                "Покажи 1–3 результата и объясни совпадения и отличия; сходство "
+                "не гарантирует совместимость. При отсутствии аналогов вернёт []."
             ),
             "strict": True,
             "parameters": {
                 "type": "object",
-                "properties": {"sku": {"type": "string", "description": "Точный артикул исходного товара"}},
-                "required": ["sku"],
+                "properties": {
+                    "product_id": {"type": "integer", "minimum": 1, "description": "id исходного товара из каталога"},
+                    "max_results": {"type": "integer", "minimum": 1, "maximum": 20},
+                },
+                "required": ["product_id", "max_results"],
                 "additionalProperties": False,
             },
         },
@@ -63,6 +67,9 @@ TOOLS = [
             "description": (
                 "Поиск реальных товаров в каталоге EKT по словам с фильтрами. "
                 "Артикул передавай целиком, сохраняя нули, дефисы и подчёркивания. "
+                "При запросе конкретного артикула ВСЕГДА in_stock_only=false, даже "
+                "на вопрос «есть в наличии?»: сначала найди товар, затем проверь quantity. "
+                "При quantity=0 вызови find_analogs с id найденного товара. "
                 "Неизвестный точный артикул означает, что товар не найден; не сокращай его. "
                 "query — короткие ключевые слова на русском; может быть пустой строкой, "
                 "если задан хотя бы один фильтр (тогда подбираются все товары под фильтры). "
@@ -81,7 +88,11 @@ TOOLS = [
                     "max_results": {"type": "integer", "minimum": 1, "maximum": 20},
                     "in_stock_only": {
                         "type": "boolean",
-                        "description": "Только товары с остатком больше нуля",
+                        "description": (
+                            "true — только товары с остатком для общей подборки. "
+                            "Для конкретного артикула ВСЕГДА false, чтобы увидеть quantity=0 "
+                            "и предложить аналоги через find_analogs."
+                        ),
                     },
                     "min_price": {
                         "type": ["number", "null"],
@@ -597,8 +608,12 @@ def execute_tool(
             return search_products(**args, return_page=True)
         if name == "get_product" and set(args) == {"product_id"}:
             return get_product(**args)
-        if name == "find_analogs" and set(args) == {"sku"}:
-            return find_analogs(**args)
+        if name == "find_analogs":
+            if set(args) == {"product_id", "max_results"}:
+                return catalog.find_analogs(**args)
+            # Совместимость с прежними прямыми вызовами инструмента по артикулу.
+            if set(args) == {"sku"}:
+                return find_analogs(**args)
         if name == "list_categories" and not args:
             return list_categories()
         if name == "propose_cart_add" and set(args) == {"product_id", "quantity"}:
@@ -661,19 +676,35 @@ def _run_agent(
     if not api_key:
         return finish("Не настроен OPENAI_API_KEY. Добавьте ключ в окружение или .env.")
     model = os.environ.get("MODEL", "gpt-4o-mini").strip() or "gpt-4o-mini"
+    pending_analogs: set[int] = set()
+    checked_analogs: set[int] = set()
 
     try:
         with OpenAI(api_key=api_key, timeout=30.0, max_retries=1) as client:
             # MAX_TOOL_ROUNDS раундов инструментов, затем только финальный текст модели.
             for iteration in range(MAX_TOOL_ROUNDS + 1):
                 final_round = iteration == MAX_TOOL_ROUNDS
+                tool_choice = "none" if final_round else "auto"
+                if pending_analogs and not final_round:
+                    messages.append({"role": "system", "content": (
+                        f"Каталог подтвердил нулевой остаток у id {sorted(pending_analogs)}. "
+                        "Сейчас вызови find_analogs для этих product_id с max_results=3; "
+                        "не предлагай покупателю самому просить поиск аналогов."
+                    )})
+                    tool_choice = {"type": "function", "function": {"name": "find_analogs"}}
+                if checked_analogs:
+                    messages.append({"role": "system", "content": (
+                        "Для исходного товара скажи «нет в наличии» на языке покупателя. "
+                        "Аналоги уже проверены: предложи 1–3 из результата find_analogs "
+                        "с ценой, совпадениями и отличиями. Если результат пуст — предложи менеджера."
+                    )})
                 if final_round:
                     messages.append({"role": "system", "content": FINAL_ROUND_NOTE})
                 response = client.chat.completions.create(
                     model=model,
                     messages=messages,
                     tools=TOOLS,
-                    tool_choice="none" if final_round else "auto",
+                    tool_choice=tool_choice,
                     # Несколько get_product за один раунд: наличие по нескольким товарам.
                     parallel_tool_calls=True,
                     max_completion_tokens=800,
@@ -698,6 +729,19 @@ def _run_agent(
                     result = execute_tool(
                         call.function.name, call.function.arguments, session_id, message
                     )
+                    if call.function.name in ("search_products", "get_product"):
+                        items = result.get("items", [result]) if isinstance(result, dict) else result
+                        if isinstance(items, list):
+                            pending_analogs.update(
+                                item["id"] for item in items if isinstance(item, dict)
+                                and type(item.get("id")) is int and item.get("quantity") == 0
+                                and item["id"] not in checked_analogs
+                            )
+                    elif call.function.name == "find_analogs" and isinstance(result, list):
+                        source_id = json.loads(call.function.arguments).get("product_id")
+                        if type(source_id) is int:
+                            checked_analogs.add(source_id)
+                            pending_analogs.discard(source_id)
                     remember_products(products, result)
                     messages.append({
                         "role": "tool",

@@ -5,7 +5,7 @@ import threading
 from html import unescape
 from html.parser import HTMLParser
 from pathlib import Path
-from urllib.parse import urlsplit
+from urllib.parse import unquote, urlsplit
 
 CATALOG_PATH = Path(__file__).resolve().parent.parent / "data" / "products.json"
 PRODUCT_FIELDS = (
@@ -117,8 +117,10 @@ def product_fields(product: dict) -> dict:
         for field in PRODUCT_FIELDS
         if field in product or field in detail
     }
-    quantity = fields.get("quantity")
-    fields["in_stock"] = isinstance(quantity, (int, float)) and quantity > 0
+    quantity = _quantity(product)
+    if "quantity" in product or "quantity" in detail:
+        fields["quantity"] = quantity
+    fields["in_stock"] = _in_stock(quantity)
     fields["stores"] = stores_in_stock(product)
     if not fields.get("category"):
         category = category_of(product)
@@ -130,6 +132,14 @@ def product_fields(product: dict) -> dict:
 def _properties(product: dict) -> dict:
     properties = _detail(product).get("properties") or product.get("properties")
     return properties if isinstance(properties, dict) else {}
+
+
+def _quantity(product: dict) -> object:
+    return _detail(product).get("quantity", product.get("quantity"))
+
+
+def _in_stock(quantity: object) -> bool:
+    return type(quantity) in (int, float) and math.isfinite(quantity) and quantity > 0
 
 
 def stock_quantity(product: dict) -> int:
@@ -243,6 +253,147 @@ def product_card(product: dict) -> dict:
 def find_product(product_id: object) -> dict | None:
     """Товар каталога по id за O(1) или None."""
     return _catalog()["by_id"].get(str(product_id))
+
+
+ANALOG_GROUP_KEYS = ("KATEGORIYA", "KATEGORIYA_SVETILNIKA", "TIP_USTROYSTVA")
+ANALOG_PROPERTY_KEYS = (
+    "NOMINALNYY_TOK", "KOLICHESTVO_POLYUSOV", "NOMINALNOE_NAPRYAZHENIE",
+    "NOMINALNAYA_OTKLYUCHAYUSHCHAYA_SPOSOBNOST", "KHARAKTERISTIKA_SRABATYVANIYA",
+    "TIP_USTANOVKI", "PLOSHCHAD_POPERECHNOGO_SECHENIYA", "KOLICHESTVO_ZHIL", "TSVET",
+)
+ANALOG_NAME_TOKEN = re.compile(
+    r"\d+(?:[.,]\d+)?\s*(?:квт|вт|w|лм|lm|к|k|ма|ma|а|a|в|v|мм|mm)\b"
+    r"|ip\s*\d+|\w+(?:[-./+]\w+)*", re.IGNORECASE,
+)
+ANALOG_STOP_WORDS = {"для", "под", "над", "на", "и", "с", "со", "в", "без", "шт", "мм", "см", "м", "из", "тип", "х-ка", "тестовый"}
+
+
+def _comparison_value(value: object) -> str:
+    text = " ".join(str(value).casefold().split()) if value is not None else ""
+    # «63 А» и «63А», «4,5кА» и «4.5 кА» сравниваются одинаково; raw не меняем.
+    text = re.sub(r"(?<=\d)\s+(?=[a-zа-я])", "", text)
+    return re.sub(r"(?<=\d),(?=\d)", ".", text)
+
+
+def _analog_url_group(product: dict) -> str:
+    url = product.get("url") or _detail(product).get("url") or ""
+    try:
+        path = unquote(urlsplit(str(url)).path).strip("/").split("/")
+    except ValueError:
+        return ""
+    if "catalog" not in path:
+        return ""
+    categories = path[path.index("catalog") + 1:-1]
+    # Последний раздел перед slug товара точнее общих «акций»/«новинок».
+    return categories[-1].casefold() if categories else ""
+
+
+def _analog_name_tokens(product: dict) -> dict[str, str]:
+    tokens = {}
+    name = product.get("name") or _detail(product).get("name") or ""
+    units = {"w": "вт", "lm": "лм", "k": "к", "ma": "ма", "a": "а", "v": "в", "mm": "мм"}
+    for match in ANALOG_NAME_TOKEN.finditer(str(name)):
+        raw = match.group()
+        token = re.sub(r"\s+", "", raw.casefold()).replace(",", ".")
+        token = re.sub(r"(?<=\d)(w|lm|k|ma|a|v|mm)$", lambda m: units[m[1]], token)
+        tokens.setdefault(token, raw)
+    return tokens
+
+
+def find_analogs(product_id: int, max_results: int = 3) -> list[dict]:
+    """Доступные товары близкой группы с объяснимыми совпадениями и отличиями."""
+    if type(product_id) is not int or product_id < 1:
+        raise ValueError("product_id должен быть положительным целым числом.")
+    if type(max_results) is not int or not 1 <= max_results <= MAX_SEARCH_RESULTS:
+        raise ValueError(f"max_results должен быть целым числом от 1 до {MAX_SEARCH_RESULTS}.")
+    source = find_product(product_id)
+    if source is None:
+        return []
+    source_props = _properties(source)
+    source_group = _analog_url_group(source)
+    source_tokens = _analog_name_tokens(source)
+    source_specs = {token for token in source_tokens if (
+        any(char.isdigit() for char in token) and any(char.isalpha() for char in token)
+    )}
+    candidates = []
+    for product in load_catalog():
+        quantity = _quantity(product)
+        if str(product.get("id")) == str(product_id) or not _in_stock(quantity):
+            continue
+        if type(product.get("id")) not in (int, str) or not str(product["id"]).strip():
+            continue
+        props = _properties(product)
+        common_groups = [key for key in ANALOG_GROUP_KEYS if (
+            _comparison_value(source_props.get(key)) and _comparison_value(props.get(key))
+        )]
+        if any(_comparison_value(source_props[key]) != _comparison_value(props[key]) for key in common_groups):
+            continue
+        same_url_group = bool(source_group and source_group == _analog_url_group(product))
+        if not common_groups and not same_url_group:
+            continue
+
+        matched = {}
+        differs = {}
+        for key in (*ANALOG_GROUP_KEYS, *ANALOG_PROPERTY_KEYS):
+            original, candidate = source_props.get(key), props.get(key)
+            if not (_comparison_value(original) or _comparison_value(candidate)):
+                continue
+            if _comparison_value(original) == _comparison_value(candidate):
+                matched[key] = candidate
+            else:
+                differs[key] = {"source": original, "candidate": candidate}
+        if same_url_group:
+            matched["catalog_group"] = source_group
+        brand_keys = ("TORGOVAYA_MARKA", "BRAND", "BREND")
+        differs["brand"] = {
+            "source": next((source_props[key] for key in brand_keys if source_props.get(key)), None),
+            "candidate": next((props[key] for key in brand_keys if props.get(key)), None),
+        }
+        tokens = _analog_name_tokens(product)
+        shared = source_tokens.keys() & tokens.keys()
+        matched["name_tokens"] = [tokens[token] for token in sorted(shared)]
+        differs["name_tokens"] = {
+            "source": [source_tokens[token] for token in sorted(source_tokens.keys() - tokens.keys())],
+            "candidate": [tokens[token] for token in sorted(tokens.keys() - source_tokens.keys())],
+        }
+        specs = {token for token in tokens if (
+            any(char.isdigit() for char in token) and any(char.isalpha() for char in token)
+        )}
+        property_matches = sum(key in matched for key in ANALOG_PROPERTY_KEYS)
+        property_differences = sum(key in differs for key in ANALOG_PROPERTY_KEYS)
+        brand_tokens = _analog_name_tokens({"name": " ".join(
+            str(value or "") for value in differs["brand"].values()
+        )})
+        meaningful_shared = {
+            token for token in shared - brand_tokens.keys() - ANALOG_STOP_WORDS
+            if len(token) > 1 and any(char.isalpha() for char in token)
+        }
+        # Общая распродажа и бренд сами по себе не делают лампу аналогом выключателя.
+        if not property_matches and not meaningful_shared:
+            continue
+        score = (
+            4 * property_matches - 2 * property_differences
+            + 3 * len(source_specs & specs) - len(source_specs ^ specs)
+            + len(shared) / max(len(source_tokens.keys() | tokens.keys()), 1)
+        )
+        fields = product_fields(product)
+        item = {key: fields[key] for key in (
+            "id", "name", "article", "price", "category", "url", "image", "url_api_detail",
+        ) if key in fields}
+        item.update(quantity=quantity, in_stock=True, matched=matched, differs=differs)
+        candidates.append((score, item))
+
+    candidates.sort(key=lambda entry: (-entry[0], str(entry[1].get("article", "")), str(entry[1]["id"])))
+    results = []
+    seen_ids = {str(product_id)}
+    for _, item in candidates:
+        if str(item["id"]) in seen_ids:
+            continue
+        seen_ids.add(str(item["id"]))
+        results.append(item)
+        if len(results) == max_results:
+            break
+    return results
 
 
 def find_by_article(article: object) -> dict | None:
@@ -402,6 +553,8 @@ def search_products(
     """
     if not isinstance(query, str):
         raise ValueError("Поисковый запрос должен быть строкой.")
+    if not isinstance(in_stock_only, bool):
+        raise ValueError("in_stock_only должен быть true или false.")
     if type(max_results) is not int or not 1 <= max_results <= MAX_SEARCH_RESULTS:
         raise ValueError(f"Количество результатов должно быть целым числом от 1 до {MAX_SEARCH_RESULTS}.")
     if type(offset) is not int or offset < 0:
@@ -428,8 +581,8 @@ def search_products(
     for product in load_catalog():
         detail = _detail(product)
         sources = (product, detail)
-        quantity = product.get("quantity", detail.get("quantity"))
-        in_stock = isinstance(quantity, (int, float)) and quantity > 0
+        quantity = _quantity(product)
+        in_stock = _in_stock(quantity)
         if in_stock_only and not in_stock:
             continue
         price = _price(product)
