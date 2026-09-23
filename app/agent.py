@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import traceback
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -16,6 +17,7 @@ from openai import (
 )
 
 from app import analogs, cart, catalog, redact_secrets, stock, terms
+from app.conversation import validate_history
 from app.prompts import SYSTEM_PROMPT
 
 MAX_TOOL_ROUNDS = 5
@@ -144,6 +146,8 @@ TOOLS = [
             "name": "propose_cart_add",
             "description": (
                 "Шаг 1 добавления в корзину: подготовить предложение «товар × количество». "
+                "Для нескольких товаров вызови для каждого: позиции одного сообщения объединяются "
+                "в общий список; повтор того же product_id заменяет его количество. "
                 "Сервер проверяет товар в каталоге, остаток и кратность продажи и сохраняет "
                 "предложение; в корзину при этом НИЧЕГО не добавляется. Покажи покупателю "
                 "артикул, название, цену, количество и сумму из ответа и спроси "
@@ -181,7 +185,9 @@ TOOLS = [
                 "Шаг 2 добавления в корзину: вызывай ТОЛЬКО когда покупатель в своём последнем "
                 "сообщении явно согласился с предложением («да», «ок», «подтверждаю», «добавьте», "
                 "«иә», «жарайды»). Сервер сам проверяет согласие в сообщении и отказывает без него. "
-                "Нельзя вызывать в одном ответе с propose_cart_add. При успехе возвращает состав "
+                "Нельзя вызывать в одном ответе с propose_cart_add. Подтверждает ВЕСЬ предложенный "
+                "список атомарно: при недостаточном остатке любой позиции ничего не добавляется. "
+                "Согласие с условием или изменением количества требует нового предложения. При успехе возвращает состав "
                 "корзины и cart_url — обязательно дай эту ссылку покупателю."
             ),
             "strict": True,
@@ -305,6 +311,7 @@ def propose_cart_add(
         raise ValueError("quantity должно быть целым числом не меньше 1.")
     if error := _no_session_error(session_id):
         return error
+    cart.reset_proposal_item(session_id, product_id)
     product = catalog.find_product(product_id)
     if product is None:
         error = {
@@ -371,66 +378,85 @@ def propose_cart_add(
         "quantity": quantity,
         "total": total,
     }
-    cart.set_pending(session_id, proposal)
+    if not cart.set_pending(session_id, proposal):
+        return {"error": f"Можно предложить не более {cart.MAX_PENDING_ITEMS} позиций за один раз. Раздели список."}
     result = {"status": "pending"}
     result.update({key: proposal[key] for key in ("article", "name", "price", "quantity", "total")})
     if already:
         result["already_in_cart"] = already
+    result["items"] = cart.snapshot(session_id)["pending"]["items"]
     result["note"] = (
-        "Товар НЕ добавлен. Покажи покупателю артикул, название, цену, количество и сумму "
-        "и спроси «Подтвердите добавление?». confirm_cart_add вызывай только после его ответа."
+        "Товары НЕ добавлены. Покажи покупателю ВСЕ позиции из items: артикул, название, цену, "
+        "количество и сумму; спроси одним предложением «Подтвердите добавление всех позиций?». "
+        "confirm_cart_add вызывай только после его ответа."
     )
     return result
 
 
 def confirm_cart_add(session_id: str | None, user_message: str) -> dict:
-    """Шаг 2: переносит предложение в корзину, если покупатель явно согласился."""
+    """Шаг 2: проверяет все позиции и добавляет их вместе после согласия."""
     if error := _no_session_error(session_id):
         return error
     pending = cart.get_pending(session_id)
-    available = 0
-    stock_source = "cache"
-    stock_note = ""
-    if pending is not None:
-        product = catalog.find_product(pending["product_id"])
+    if pending is None or not cart.is_confirmation(user_message):
+        return cart.commit_pending(session_id, user_message, {})
+    quantities = cart.confirmed_quantities(user_message)
+    if quantities and (len(pending["items"]) != 1 or quantities != {pending["items"][0]["quantity"]}):
+        return cart.commit_pending(session_id, user_message, {}, expected_pending=pending)
+    products = []
+    for proposal in pending["items"]:
+        product = catalog.find_product(proposal["product_id"])
         if product is None:
             cart.clear_pending(session_id)
             return {"error": "Товар из предложения больше не найден в каталоге. Предложение снято."}
+        if proposal["quantity"] % catalog.min_batch(product):
+            cart.clear_pending(session_id)
+            return {"error": "Кратность продажи изменилась. Ничего не добавлено: предложи обновлённый список."}
+        products.append(product)
+
+    def refresh_stock(product: dict) -> tuple[int, str, bool]:
         # Перед добавлением остаток сверяется с API ekt.kz; без ответа API — по кэшу.
         attempted = stock.check_available(product)
         live = stock.live_quantity(product) if attempted else None
         if live is not None:
-            available, stock_source = live, "live"
-        else:
-            available = catalog.stock_quantity(product)
-            if attempted:
-                stock_note = (
-                    "Свежий остаток из API ekt.kz получить не удалось: количество проверено "
-                    "по данным кэша каталога. Скажи об этом покупателю."
-                )
-    result = cart.commit_pending(session_id, user_message, available)
+            return live, "live", False
+        return catalog.stock_quantity(product), "cache", attempted
+
+    if len(products) == 1:
+        checks = [refresh_stock(products[0])]
+    else:
+        with ThreadPoolExecutor(max_workers=5) as pool:
+            checks = list(pool.map(refresh_stock, products))
+    available = {row["product_id"]: check[0] for row, check in zip(pending["items"], checks)}
+    sources = {check[1] for check in checks}
+    stock_source = sources.pop() if len(sources) == 1 else "mixed"
+    stock_note = (
+        "Свежий остаток из API ekt.kz для части позиций получить не удалось: количество проверено "
+        "по данным кэша каталога. Скажи об этом покупателю."
+    ) if any(check[2] for check in checks) else ""
+    result = cart.commit_pending(session_id, user_message, available, expected_pending=pending)
     if "error" in result:
         if stock_note:
             result["stock_note"] = stock_note
         return result
-    item = result["item"]
     state = cart.snapshot(session_id)
-    result = {
+    added_items = result["items"]
+    response = {
         "status": "added",
-        "article": item["article"],
-        "name": item["name"],
+        "items": added_items,
         "added": result["added"],
-        "qty_in_cart": item["qty"],
-        "price": item["price"],
         "cart_count": state["count"],
         "cart_total": state["total"],
         "cart_url": state["cart_url"],
         "stock_source": stock_source,
-        "note": "Товар добавлен. Сообщи об этом покупателю и обязательно дай ссылку cart_url.",
+        "note": "Все предложенные позиции добавлены. Сообщи об этом покупателю и обязательно дай ссылку cart_url.",
     }
+    if len(added_items) == 1:
+        item = added_items[0]
+        response.update({"article": item["article"], "name": item["name"], "qty_in_cart": item["qty"], "price": item["price"]})
     if stock_note:
-        result["stock_note"] = stock_note
-    return result
+        response["stock_note"] = stock_note
+    return response
 
 
 def cancel_cart_proposal(session_id: str | None) -> dict:
@@ -459,9 +485,13 @@ def cart_context_note(session_id: str | None) -> str:
         lines = [f"Корзина покупателя пуста. Ссылка на корзину: {state['cart_url']}"]
     pending = state["pending"]
     if pending and pending["awaiting_confirmation"]:
+        proposed = "; ".join(
+            f"{row['article']} — {row['name']} × {row['quantity']} шт."
+            for row in pending["items"]
+        )
         lines.append(
-            f"В прошлом ответе покупателю предложено добавить {pending['article']} — "
-            f"{pending['name']} × {pending['quantity']} шт. и задан вопрос «Подтвердите добавление?». "
+            f"В прошлом ответе покупателю предложено добавить ВЕСЬ список: {proposed}. "
+            "Задан вопрос «Подтвердите добавление всех позиций?». "
             "Если текущее сообщение — явное согласие, вызови confirm_cart_add; если отказ — "
             "cancel_cart_proposal; если покупатель хочет другое количество или другой товар — "
             "propose_cart_add заново."
@@ -602,8 +632,10 @@ def _run_agent(
 
     if not isinstance(message, str):
         return finish("Сообщение должно быть текстом. Напишите, какой товар вы ищете.")
-    if not isinstance(history, list):
-        return finish("История разговора должна быть списком реплик user/assistant.")
+    try:
+        history = validate_history(history)
+    except ValueError as error:
+        return finish(str(error))
     log(
         "Запрос",
         message if content_logging_enabled()
@@ -619,14 +651,7 @@ def _run_agent(
         "\n\n" + note for note in (terms.terms_note(), context_note, cart_note) if note
     ) + language_hint
     messages = [{"role": "system", "content": system_prompt}]
-    for entry in history[-10:]:
-        if (
-            not isinstance(entry, dict)
-            or entry.get("role") not in ("user", "assistant")
-            or not isinstance(entry.get("content"), str)
-        ):
-            return finish("В истории допустимы только текстовые реплики user/assistant.")
-        messages.append({"role": entry["role"], "content": entry["content"]})
+    messages.extend(history)
     content = message.strip()
     if attachment_parts:
         content = ([{"type": "text", "text": content}] if content else []) + attachment_parts

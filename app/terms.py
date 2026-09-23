@@ -20,19 +20,15 @@ _cache: dict = {"key": None, "text": ""}
 
 
 def load_terms() -> str:
-    """Текст условий; пустая строка, если файла нет. Перечитывается при изменении файла."""
+    """Текст условий; сравниваем содержимое, поскольку размер и mtime могут не измениться."""
     try:
-        stat = TERMS_PATH.stat()
-    except OSError:
+        text = TERMS_PATH.read_text(encoding="utf-8").strip()[:MAX_TERMS_CHARS]
+    except (OSError, UnicodeError):
         return ""
-    key = (str(TERMS_PATH), stat.st_mtime_ns, stat.st_size)
+    key = (str(TERMS_PATH), text)
     if _cache["key"] != key:
-        try:
-            text = TERMS_PATH.read_text(encoding="utf-8").strip()
-        except (OSError, UnicodeError):
-            return ""
-        _cache.update(key=key, text=text[:MAX_TERMS_CHARS])
-    return _cache["text"]
+        _cache.update(key=key, text=text)
+    return text
 
 
 def terms_note() -> str:

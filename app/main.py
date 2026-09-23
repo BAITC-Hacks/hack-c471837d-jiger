@@ -9,7 +9,7 @@ from fastapi.concurrency import run_in_threadpool
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field, ValidationError, field_validator
 from starlette.datastructures import UploadFile
 
 from app import cart
@@ -17,6 +17,7 @@ from app.agent import ERROR_REPLY, log_exception, run_agent
 from app.attachments import AttachmentError, attachment_form, prepare_attachments
 from app.cart_page import render_cart_page
 from app.catalog import load_catalog
+from app.conversation import MAX_JSON_BODY_BYTES, validate_history
 from app.terms import load_terms
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -36,7 +37,7 @@ def allowed_origins() -> list[str]:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Каталог и условия покупки читаются с диска один раз и кэшируются в памяти.
+    # Прогреваем данные; изменения файлов подхватываются последующими запросами.
     load_catalog()
     load_terms()
     yield
@@ -85,13 +86,19 @@ class ChatRequest(BaseModel):
     # id товаров, уже показанных в чате: контекст для уточняющих вопросов.
     product_ids: list[int] = Field(default_factory=list, max_length=20)
 
+    @field_validator("history")
+    @classmethod
+    def bounded_history(cls, value: list[dict]) -> list[dict]:
+        return validate_history(value)
+
 
 @app.exception_handler(RequestValidationError)
 async def invalid_request(request: Request, error: RequestValidationError) -> JSONResponse:
     return JSONResponse(
         status_code=422,
         content={
-            "reply": "Некорректный запрос: message должен быть текстом, history — списком реплик.",
+            "reply": "Некорректный запрос: message должен быть текстом; history — до 10 реплик "
+            "user/assistant, до 6000 символов в каждой и 20000 суммарно.",
             "products": [],
         },
     )
@@ -153,7 +160,12 @@ async def chat(request: Request, response: Response):
                 if len(payload.message) <= 1000:
                     attachment_parts = await run_in_threadpool(prepare_attachments, files)
         elif not content_type or content_type == "application/json":
-            payload = ChatRequest.model_validate(await request.json())
+            body = bytearray()
+            async for chunk in request.stream():
+                if len(body) + len(chunk) > MAX_JSON_BODY_BYTES:
+                    raise AttachmentError("JSON-запрос превышает лимит 128 КБ. Сократите историю переписки.", 413)
+                body.extend(chunk)
+            payload = ChatRequest.model_validate(json.loads(body))
         else:
             raise AttachmentError("Отправьте JSON или форму multipart/form-data.", 415)
     except (ValidationError, json.JSONDecodeError, UnicodeError, TypeError) as error:

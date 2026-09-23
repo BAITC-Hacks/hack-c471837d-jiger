@@ -2,7 +2,10 @@ import json
 import math
 import re
 import threading
+from html import unescape
+from html.parser import HTMLParser
 from pathlib import Path
+from urllib.parse import urlsplit
 
 CATALOG_PATH = Path(__file__).resolve().parent.parent / "data" / "products.json"
 PRODUCT_FIELDS = (
@@ -147,6 +150,80 @@ def min_batch(product: dict) -> int:
     return batch if batch > 1 else 1
 
 
+_CERTIFICATE_LABEL = re.compile(r"сертиф|certificat|sertifikat|(?:^|[_/\-])cert(?:[_/\-]|$)", re.IGNORECASE)
+_DOCUMENT_URL = re.compile(r"https?://[^\s<>\"']+", re.IGNORECASE)
+
+
+class _CertificateAnchors(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__()
+        self.links: list[str] = []
+        self.href = ""
+        self.label = ""
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag == "a":
+            attributes = dict(attrs)
+            self.href = attributes.get("href") or ""
+            self.label = attributes.get("title") or ""
+
+    def handle_data(self, data: str) -> None:
+        if self.href:
+            self.label += data
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag == "a":
+            if _CERTIFICATE_LABEL.search(self.label):
+                self.links.append(self.href)
+            self.href = self.label = ""
+
+
+def certificate_urls(product: dict) -> list[str]:
+    """Expose only certificate links present in the catalog; never construct URLs.
+
+    A PDF alone may be a manual. A certificate label in its property, text or
+    anchor (or in the URL itself) is required. Links are not fetched here.
+    """
+    candidates: list[str] = []
+
+    def collect(value: object, labeled: bool = False) -> None:
+        if isinstance(value, dict):
+            for key, child in value.items():
+                collect(child, labeled or bool(_CERTIFICATE_LABEL.search(str(key))))
+        elif isinstance(value, list):
+            for child in value:
+                collect(child, labeled)
+        elif isinstance(value, str):
+            text = unescape(value)
+            parser = _CertificateAnchors()
+            parser.feed(text)
+            candidates.extend(parser.links)
+            for match in _DOCUMENT_URL.finditer(text):
+                url = match.group().rstrip(".,;:)]}")
+                if labeled or _CERTIFICATE_LABEL.search(url):
+                    candidates.append(url)
+                    continue
+                # Plain text: the certificate label must immediately introduce
+                # this link, rather than another document earlier in a paragraph.
+                prefix = text[max(0, match.start() - 100):match.start()]
+                if re.search(r"(?:сертификат\w*|certificate\w*|sertifikat\w*)[^<>\n:.;/]{0,70}:?\s*$", prefix, re.IGNORECASE):
+                    candidates.append(url)
+
+    for source in (product, _detail(product)):
+        collect(source.get("description"))
+        collect(source.get("properties"))
+    links = []
+    for url in candidates:
+        try:
+            parsed = urlsplit(url)
+        except ValueError:
+            continue
+        if parsed.scheme in ("http", "https") and parsed.netloc and not parsed.username and not parsed.password:
+            if url not in links:
+                links.append(url)
+    return links
+
+
 def product_card(product: dict) -> dict:
     """Полная карточка для get_product: описание, характеристики, склады, кратность."""
     detail = _detail(product)
@@ -159,6 +236,7 @@ def product_card(product: dict) -> dict:
         }
         card["min_batch"] = properties.get("KRATNOST_MIN")
     card["stores_note"] = STORES_NOTE
+    card["certificate_urls"] = certificate_urls(product)
     return card
 
 

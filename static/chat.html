@@ -588,12 +588,25 @@
         if (!event.isComposing) form.requestSubmit();
       });
 
+      function historyForRequest() {
+        const recent = [];
+        let total = 0;
+        for (let index = history.length - 1; index >= 0 && recent.length < 10; index--) {
+          const entry = history[index];
+          // Сохраняем целые реплики: оборванные количества и условия могут изменить смысл.
+          if (entry.content.length > 6000 || total + entry.content.length > 20000) break;
+          recent.unshift(entry);
+          total += entry.content.length;
+        }
+        return recent;
+      }
+
       form.addEventListener("submit", async (event) => {
         event.preventDefault();
         const message = input.value.trim();
         if (busy || (!message && selectedFiles.length === 0)) return;
 
-        const previousHistory = history.slice(-10);
+        const previousHistory = historyForRequest();
         const submittedFiles = [...selectedFiles];
         const displayMessage = [message, ...submittedFiles.map(file => `Вложение: ${file.name}`)].filter(Boolean).join("\n");
         const body = new FormData();
