@@ -217,6 +217,34 @@ async def test_stock_limit_counts_items_already_in_cart(client: httpx.AsyncClien
     assert cart_rows(await api_cart(client)) == [(LOW_STOCK_ARTICLE, 3, 159)]
 
 
+async def test_stock_is_rechecked_when_catalog_changes_before_confirmation(
+    client: httpx.AsyncClient, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Между предложением и «да» мог отработать fetch_catalog.py и уменьшить остаток."""
+    await chat(client, f"Добавь 3 шт. {LOW_STOCK_ARTICLE}", PROPOSE_THREE)
+
+    products = json.loads((FIXTURES_DIR / "catalog_small.json").read_text(encoding="utf-8"))
+    for product in products:
+        if product["id"] == LOW_STOCK_ID:
+            product["quantity"] = 1
+            product["stores"] = [
+                {**store, "quantity": 1 if store["quantity"] else 0} for store in product["stores"]
+            ]
+    updated = tmp_path / "products.json"
+    updated.write_text(json.dumps(products), encoding="utf-8")
+    monkeypatch.setattr(catalog, "CATALOG_PATH", updated)
+
+    await chat(client, "да", [
+        [("confirm_cart_add", {})],
+        "Остаток изменился: доступна 1 шт. Подтвердите добавление 1 шт.?",
+    ])
+
+    [refused] = tool_results("confirm_cart_add")
+    assert "error" in refused, "Подтверждение не должно обходить проверку остатка."
+    assert refused.get("max_quantity") == 1
+    assert (await api_cart(client))["items"] == []
+
+
 async def test_other_client_cannot_read_or_change_cart(client: httpx.AsyncClient) -> None:
     await chat(client, f"Добавь 3 шт. {LOW_STOCK_ARTICLE}", PROPOSE_THREE)
     await chat(client, "да", CONFIRM)

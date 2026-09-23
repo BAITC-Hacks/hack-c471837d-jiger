@@ -34,11 +34,8 @@ def find_analogs(sku: str) -> list[dict]:
         raise ValueError("Для подбора аналогов нужен непустой артикул.")
 
     products = catalog.load_catalog()
-    folded_sku = sku.strip().casefold()
-    source = next(
-        (product for product in products if folded_sku in catalog.product_articles(product)),
-        None,
-    )
+    # Индекс артикулов и псевдонимов: точное совпадение за O(1).
+    source = catalog.find_by_article(sku)
     if source is None:
         return []
     source_fields = catalog.product_fields(source)

@@ -1,5 +1,7 @@
 import json
+import math
 import re
+import threading
 from pathlib import Path
 
 CATALOG_PATH = Path(__file__).resolve().parent.parent / "data" / "products.json"
@@ -160,12 +162,39 @@ def product_card(product: dict) -> dict:
     return card
 
 
-def find_product(product_id: int) -> dict | None:
-    """Товар каталога по id или None."""
-    for product in load_catalog():
-        if str(product.get("id")) == str(product_id):
+def find_product(product_id: object) -> dict | None:
+    """Товар каталога по id за O(1) или None."""
+    return _catalog()["by_id"].get(str(product_id))
+
+
+def find_by_article(article: object) -> dict | None:
+    """Товар по точному артикулу или псевдониму (регистр и внешние пробелы не важны) за O(1)."""
+    if not isinstance(article, str):
+        return None
+    folded = article.casefold().strip()
+    matches = _catalog()["by_article"].get(folded)
+    if not matches:
+        return None
+    # Псевдоним может быть общим для нескольких товаров: предпочитаем основной артикул.
+    for product in matches:
+        if str(product.get("article") or "").casefold().strip() == folded:
             return product
-    return None
+    return matches[0]
+
+
+def products_by_article(aliases: set[str]) -> set[int]:
+    """Идентификаторы объектов товаров, у которых есть любой из псевдонимов артикула."""
+    by_article = _catalog()["by_article"]
+    return {id(product) for alias in aliases for product in by_article.get(alias, ())}
+
+
+def update_stock(product: dict, quantity: int, stores: object = None) -> None:
+    """Обновляет остаток товара в кэше памяти свежими данными API (до следующей перезагрузки)."""
+    target = product["detail"] if isinstance(product.get("detail"), dict) else product
+    with _cache_lock:
+        target["quantity"] = quantity
+        if isinstance(stores, list):
+            target["stores"] = stores
 
 
 def product_articles(product: dict) -> set[str]:
@@ -182,7 +211,13 @@ def product_articles(product: dict) -> set[str]:
     return articles - {""}
 
 
-def load_catalog() -> list[dict]:
+_cache_lock = threading.RLock()
+# Кэш каталога в памяти: {"key": отпечаток файла, "products": [...], "by_id": {...}, "by_article": {...}}.
+_cache: dict | None = None
+
+
+def _read_catalog() -> list[dict]:
+    """Читает и проверяет data/products.json с диска."""
     try:
         with CATALOG_PATH.open(encoding="utf-8") as file:
             products = json.load(file)
@@ -205,6 +240,58 @@ def load_catalog() -> list[dict]:
     ):
         raise RuntimeError("Неверный формат каталога: ожидается список товаров.")
     return products
+
+
+def _catalog_key() -> tuple:
+    """Отпечаток файла каталога: путь, inode, время изменения и размер."""
+    try:
+        stat = CATALOG_PATH.stat()
+    except FileNotFoundError:
+        raise RuntimeError(
+            "Каталог data/products.json не найден: запустите python fetch_catalog.py "
+            "(с uv: uv run python fetch_catalog.py)."
+        ) from None
+    except OSError:
+        raise RuntimeError(
+            "Не удалось прочитать data/products.json. Проверьте права доступа."
+        ) from None
+    return (str(CATALOG_PATH), stat.st_ino, stat.st_mtime_ns, stat.st_size)
+
+
+def _build_index(products: list[dict]) -> tuple[dict[str, dict], dict[str, list[dict]]]:
+    by_id: dict[str, dict] = {}
+    by_article: dict[str, list[dict]] = {}
+    for product in products:
+        if product.get("id") is not None:
+            by_id.setdefault(str(product["id"]), product)
+        for alias in product_articles(product):
+            by_article.setdefault(alias, []).append(product)
+    return by_id, by_article
+
+
+def _catalog() -> dict:
+    """Каталог из памяти; с диска читается при старте и когда файл изменился."""
+    global _cache
+    key = _catalog_key()
+    with _cache_lock:
+        if _cache is None or _cache["key"] != key:
+            products = _read_catalog()
+            by_id, by_article = _build_index(products)
+            _cache = {"key": key, "products": products, "by_id": by_id, "by_article": by_article}
+        return _cache
+
+
+def load_catalog() -> list[dict]:
+    """Список товаров из кэша в памяти. Список общий для всех запросов: не изменять."""
+    return _catalog()["products"]
+
+
+def reload_catalog() -> list[dict]:
+    """Принудительно перечитывает data/products.json и перестраивает индексы."""
+    global _cache
+    with _cache_lock:
+        _cache = None
+        return load_catalog()
 
 
 def _price(product: dict) -> float | None:
@@ -257,6 +344,8 @@ def search_products(
     if not words and not has_filters:
         raise ValueError("Укажите ключевые слова или хотя бы один фильтр: цена, наличие, категория.")
 
+    # Точный артикул ищется по индексу: целый запрос или любой его токен-идентификатор.
+    exact_products = products_by_article({folded_query, *article_words})
     matches = []
     for product in load_catalog():
         detail = _detail(product)
@@ -285,8 +374,7 @@ def search_products(
         searchable_words = set(SEARCH_TOKEN.findall(searchable))
         searchable = _search_text(searchable)
         searchable_words.update(SEARCH_TOKEN.findall(searchable))
-        articles = product_articles(product)
-        exact_article = folded_query in articles or bool(articles & article_words)
+        exact_article = id(product) in exact_products
         # Unknown codes must not fall back to a coincidentally matching name/category.
         # Whole numeric/specification tokens still allow queries such as "IP20" or "30 Вт".
         # An explicit known article still identifies the product when the buyer adds

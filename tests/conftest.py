@@ -1,4 +1,5 @@
 import json
+import socket
 from collections.abc import AsyncIterator, Iterator
 from pathlib import Path
 from uuid import uuid4
@@ -18,6 +19,28 @@ FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures"
 @pytest.fixture
 def catalog() -> list[dict]:
     return json.loads((FIXTURES_DIR / "catalog_small.json").read_text(encoding="utf-8"))
+
+
+@pytest.fixture(autouse=True)
+def no_network(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Офлайн-тесты не выходят в сеть: живой остаток и каталог берутся из моков.
+
+    Без этой защиты app.stock.live_quantity обратился бы к ekt.kz, как только
+    в окружении разработчика окажутся EKT_API_USER и EKT_API_PASSWORD.
+    Тесты с меткой live обращаются к API намеренно и не ограничиваются.
+    """
+    if request.node.get_closest_marker("live"):
+        return
+    original = socket.socket.connect
+
+    def forbid_connect(self, address, *args, **kwargs):
+        raise AssertionError(
+            f"Офлайн-тест попытался открыть сетевое соединение с {address}. "
+            "Замокайте запрос (respx) или пометьте тест как live."
+        )
+
+    monkeypatch.setattr(socket.socket, "connect", forbid_connect)
+    assert socket.socket.connect is not original
 
 
 @pytest.fixture

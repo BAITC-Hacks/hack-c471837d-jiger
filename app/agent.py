@@ -15,7 +15,7 @@ from openai import (
     RateLimitError,
 )
 
-from app import analogs, cart, catalog, redact_secrets
+from app import analogs, cart, catalog, redact_secrets, stock, terms
 from app.prompts import SYSTEM_PROMPT
 
 MAX_TOOL_ROUNDS = 5
@@ -157,7 +157,10 @@ TOOLS = [
                     "product_id": {
                         "type": "integer",
                         "minimum": 1,
-                        "description": "id товара из результатов search_products или get_product",
+                        "description": (
+                            "Поле id товара из результатов search_products или get_product в этом "
+                            "диалоге. Артикул и цифры из артикула не подходят: сначала найди товар."
+                        ),
                     },
                     "quantity": {
                         "type": "integer",
@@ -275,7 +278,26 @@ def _no_session_error(session_id: str | None) -> dict | None:
     return None
 
 
-def propose_cart_add(session_id: str | None, product_id: int, quantity: int) -> dict:
+def product_from_message(message: str) -> dict | None:
+    """Единственный товар, чей артикул покупатель назвал в сообщении, иначе None."""
+    if not isinstance(message, str):
+        return None
+    folded = message.casefold()
+    candidates = [folded.strip()] + catalog.SEARCH_TOKEN.findall(folded)
+    found: dict[int, dict] = {}
+    for token in candidates:
+        # Короткие или чисто буквенные токены не считаем артикулами.
+        if len(token) < 5 or token.isalpha():
+            continue
+        product = catalog.find_by_article(token)
+        if product is not None:
+            found[id(product)] = product
+    return next(iter(found.values())) if len(found) == 1 else None
+
+
+def propose_cart_add(
+    session_id: str | None, product_id: int, quantity: int, user_message: str = ""
+) -> dict:
     """Шаг 1: проверка товара, остатка и кратности; сохраняет предложение, не меняя корзину."""
     if type(product_id) is not int or product_id < 1:
         raise ValueError("product_id должен быть положительным целым числом.")
@@ -285,7 +307,21 @@ def propose_cart_add(session_id: str | None, product_id: int, quantity: int) -> 
         return error
     product = catalog.find_product(product_id)
     if product is None:
-        return {"error": f"Товар с id {product_id} не найден в загруженном каталоге."}
+        error = {
+            "error": (
+                f"Товар с id {product_id} не найден в загруженном каталоге. product_id — это поле id "
+                "из результатов search_products или get_product, а не артикул."
+            )
+        }
+        hinted = product_from_message(user_message)
+        if hinted is not None:
+            fields = catalog.product_fields(hinted)
+            error["hint"] = {key: fields.get(key) for key in ("id", "article", "name", "quantity")}
+            error["error"] += (
+                f" В сообщении покупателя указан артикул {fields.get('article')} — это товар "
+                f"id {fields.get('id')}: вызови propose_cart_add с этим id."
+            )
+        return error
     fields = catalog.product_fields(product)
     stock = catalog.stock_quantity(product)
     batch = catalog.min_batch(product)
@@ -352,19 +388,34 @@ def confirm_cart_add(session_id: str | None, user_message: str) -> dict:
     if error := _no_session_error(session_id):
         return error
     pending = cart.get_pending(session_id)
-    stock = 0
+    available = 0
+    stock_source = "cache"
+    stock_note = ""
     if pending is not None:
         product = catalog.find_product(pending["product_id"])
         if product is None:
             cart.clear_pending(session_id)
             return {"error": "Товар из предложения больше не найден в каталоге. Предложение снято."}
-        stock = catalog.stock_quantity(product)
-    result = cart.commit_pending(session_id, user_message, stock)
+        # Перед добавлением остаток сверяется с API ekt.kz; без ответа API — по кэшу.
+        attempted = stock.check_available(product)
+        live = stock.live_quantity(product) if attempted else None
+        if live is not None:
+            available, stock_source = live, "live"
+        else:
+            available = catalog.stock_quantity(product)
+            if attempted:
+                stock_note = (
+                    "Свежий остаток из API ekt.kz получить не удалось: количество проверено "
+                    "по данным кэша каталога. Скажи об этом покупателю."
+                )
+    result = cart.commit_pending(session_id, user_message, available)
     if "error" in result:
+        if stock_note:
+            result["stock_note"] = stock_note
         return result
     item = result["item"]
     state = cart.snapshot(session_id)
-    return {
+    result = {
         "status": "added",
         "article": item["article"],
         "name": item["name"],
@@ -374,8 +425,12 @@ def confirm_cart_add(session_id: str | None, user_message: str) -> dict:
         "cart_count": state["count"],
         "cart_total": state["total"],
         "cart_url": state["cart_url"],
+        "stock_source": stock_source,
         "note": "Товар добавлен. Сообщи об этом покупателю и обязательно дай ссылку cart_url.",
     }
+    if stock_note:
+        result["stock_note"] = stock_note
+    return result
 
 
 def cancel_cart_proposal(session_id: str | None) -> dict:
@@ -476,13 +531,18 @@ def log(label: str, value: str) -> None:
     print(redact_secrets(f"{label}: {value}"), flush=True)
 
 
+def content_logging_enabled() -> bool:
+    """Текст сообщений покупателя и ответов попадает в лог только при LOG_LEVEL=DEBUG."""
+    return os.environ.get("LOG_LEVEL", "").strip().upper() == "DEBUG"
+
+
 def log_exception(label: str) -> None:
     log(label, traceback.format_exc())
 
 
 def finish(answer: str) -> str:
     answer = redact_secrets(answer)
-    log("Ответ", answer)
+    log("Ответ", answer if content_logging_enabled() else f"{len(answer)} символов")
     return answer
 
 
@@ -495,7 +555,8 @@ def execute_tool(
     корзины недоступны); user_message — текущее сообщение покупателя, по которому
     сервер сам решает, было ли явное подтверждение добавления.
     """
-    log("Инструмент", f"{name} {arguments}")
+    # Аргументы могут содержать текст покупателя: по умолчанию логируется только имя.
+    log("Инструмент", f"{name} {arguments}" if content_logging_enabled() else name)
     try:
         args = json.loads(arguments)
         if not isinstance(args, dict):
@@ -511,7 +572,7 @@ def execute_tool(
         if name == "list_categories" and not args:
             return list_categories()
         if name == "propose_cart_add" and set(args) == {"product_id", "quantity"}:
-            return propose_cart_add(session_id, **args)
+            return propose_cart_add(session_id, **args, user_message=user_message)
         if name == "confirm_cart_add" and not args:
             return confirm_cart_add(session_id, user_message)
         if name == "cancel_cart_proposal" and not args:
@@ -541,9 +602,13 @@ def _run_agent(
 
     if not isinstance(message, str):
         return finish("Сообщение должно быть текстом. Напишите, какой товар вы ищете.")
-    log("Запрос", message)
     if not isinstance(history, list):
         return finish("История разговора должна быть списком реплик user/assistant.")
+    log(
+        "Запрос",
+        message if content_logging_enabled()
+        else f"{len(message)} символов, история: {len(history)} реплик",
+    )
 
     language_hint = ""
     if any(letter in message.casefold() for letter in "әғқңөұүһі"):
@@ -551,7 +616,7 @@ def _run_agent(
     context_note = shown_products_note(product_ids or [])
     cart_note = cart_context_note(session_id)
     system_prompt = SYSTEM_PROMPT + "".join(
-        "\n\n" + note for note in (context_note, cart_note) if note
+        "\n\n" + note for note in (terms.terms_note(), context_note, cart_note) if note
     ) + language_hint
     messages = [{"role": "system", "content": system_prompt}]
     for entry in history[-10:]:
@@ -661,6 +726,7 @@ if __name__ == "__main__":
     parser.add_argument("message", help="Вопрос покупателя в кавычках")
     args = parser.parse_args()
     try:
-        run_agent(args.message, [])
+        # Лог по умолчанию не содержит текста ответа, поэтому печатаем его отдельно.
+        print(run_agent(args.message, [])["reply"])
     except KeyboardInterrupt:
         print("\nЗапрос прерван.")

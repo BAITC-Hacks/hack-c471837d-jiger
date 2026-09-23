@@ -1,7 +1,9 @@
 import json
+import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
+from dotenv import load_dotenv
 from fastapi import FastAPI, Request, Response
 from fastapi.concurrency import run_in_threadpool
 from fastapi.exceptions import RequestValidationError
@@ -15,23 +17,43 @@ from app.agent import ERROR_REPLY, log_exception, run_agent
 from app.attachments import AttachmentError, attachment_form, prepare_attachments
 from app.cart_page import render_cart_page
 from app.catalog import load_catalog
+from app.terms import load_terms
+
+ROOT = Path(__file__).resolve().parent.parent
+try:
+    # Настройки сервера (ALLOWED_ORIGINS, PUBLIC_BASE_URL, LOG_LEVEL) читаются из .env при старте.
+    load_dotenv(ROOT / ".env")
+except (OSError, UnicodeError):
+    pass
+
+
+def allowed_origins() -> list[str]:
+    """ALLOWED_ORIGINS через запятую; по умолчанию * для демонстрации."""
+    raw = os.environ.get("ALLOWED_ORIGINS", "")
+    origins = [origin.strip().rstrip("/") for origin in raw.split(",") if origin.strip()]
+    return origins or ["*"]
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Каталог и условия покупки читаются с диска один раз и кэшируются в памяти.
     load_catalog()
+    load_terms()
     yield
 
 
+ORIGINS = allowed_origins()
 app = FastAPI(title="EKT — ИИ-консультант", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ORIGINS,
+    # Cookie корзины уходит на другой домен только при явном списке источников.
+    allow_credentials="*" not in ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-CHAT_PATH = Path(__file__).resolve().parent.parent / "static" / "chat.html"
+CHAT_PATH = ROOT / "static" / "chat.html"
 NO_STORE = {"Cache-Control": "no-store"}
 
 
