@@ -7,7 +7,9 @@ EKT_PASSWORD, falling back to the project's EKT_API_PASSWORD variable.
 import json
 import os
 from collections.abc import Iterator
+from math import isfinite
 from pathlib import Path
+from time import perf_counter
 from uuid import uuid4
 
 import httpx
@@ -167,3 +169,82 @@ def test_very_large_page_returns_valid_response(
     assert isinstance(payload["items"], list), "Поле items должно быть списком."
     assert len(payload["items"]) <= payload["per_page"]
     _assert_product_fields(payload["items"], required_product_fields)
+
+
+@pytest.fixture(scope="module")
+def api_detail_sample() -> dict:
+    paths = sorted((Path(__file__).resolve().parent / "fixtures").glob("api_product_detail_*.json"))
+    assert paths, "Нужен сохранённый образец ответа /api/products/detail."
+    sample = json.loads(paths[0].read_text(encoding="utf-8"))
+    assert isinstance(sample, dict), "Образец деталей товара должен быть JSON-объектом."
+    return sample
+
+
+@pytest.fixture
+def existing_product_id(ekt_client: httpx.Client, ekt_auth: httpx.BasicAuth) -> int:
+    page = _get_product_page(ekt_client, ekt_auth, 1)
+    assert page["items"], "Нужен существующий товар для проверки деталей."
+    product_id = page["items"][0]["id"]
+    assert type(product_id) is int and product_id > 0
+    return product_id
+
+
+def test_existing_product_detail_has_name_price_and_quantity(
+    ekt_client: httpx.Client,
+    ekt_auth: httpx.BasicAuth,
+    existing_product_id: int,
+    api_detail_sample: dict,
+) -> None:
+    # These are the field names in the captured detail response.
+    required_fields = {"name", "price", "quantity"}
+    assert required_fields.issubset(api_detail_sample), "Проверьте поля в образце деталей API."
+    response = ekt_client.get(
+        f"{API_URL}/detail", params={"id": existing_product_id}, auth=ekt_auth,
+    )
+
+    assert response.status_code == 200
+    detail = response.json()
+    assert isinstance(detail, dict), "Детали товара должны быть JSON-объектом."
+    assert detail.get("id") == existing_product_id, "API вернул другой товар."
+    assert required_fields.issubset(detail), "В деталях отсутствуют name, price или quantity."
+    assert isinstance(detail["name"], str) and detail["name"].strip(), "Наименование пустое."
+    for field in ("price", "quantity"):
+        value = detail[field]
+        assert type(value) in (int, float), f"Поле {field} должно быть числом."
+        assert isfinite(value) and value >= 0, f"Поле {field} должно быть конечным числом >= 0."
+
+
+def test_nonexistent_product_detail_returns_404_or_empty(
+    ekt_client: httpx.Client,
+    ekt_auth: httpx.BasicAuth,
+    api_page_sample: dict,
+) -> None:
+    # Use a positive 32-bit ID to avoid testing malformed input or integer overflow.
+    missing_id = 2_147_483_647
+    assert missing_id not in {item["id"] for item in api_page_sample["items"]}
+    response = ekt_client.get(
+        f"{API_URL}/detail", params={"id": missing_id}, auth=ekt_auth,
+    )
+
+    assert response.status_code in (200, 204, 404), (
+        f"Для несуществующего ID ожидался 404 или пустой успешный ответ, получен HTTP {response.status_code}."
+    )
+    if response.status_code == 404 or not response.content.strip():
+        return
+    assert response.json() in (None, {}, [], ""), "Для несуществующего ID возвращён непустой ответ."
+
+
+def test_product_detail_response_time_under_three_seconds(
+    ekt_client: httpx.Client,
+    ekt_auth: httpx.BasicAuth,
+    existing_product_id: int,
+) -> None:
+    # The fixture's page request is completed before the detail timer starts.
+    started = perf_counter()
+    response = ekt_client.get(
+        f"{API_URL}/detail", params={"id": existing_product_id}, auth=ekt_auth, timeout=3.0,
+    )
+    elapsed = perf_counter() - started
+
+    assert response.status_code == 200
+    assert elapsed < 3.0, f"Ответ /api/products/detail занял {elapsed:.3f} сек., ожидалось < 3 сек."
